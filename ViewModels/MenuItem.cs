@@ -13,17 +13,15 @@ namespace ChartPerformance.ViewModels
         public virtual string Title { get { var n = GetType().Name; return n.Substring(0, n.Length - 8); } }
         public virtual int Count { get; set; }
         public virtual bool Selected { get; set; }
-        public virtual string Icon { get { return Title.ToLower().TrimEnd('s') + ".png" ; } }
-        public ImageSource IconSource { get { return ImageSource.FromFile(Icon); } }
+        // public virtual string Icon { get { return Title.ToLower().TrimEnd('s') + ".png" ; } }
+        // public ImageSource IconSource { get { return ImageSource.FromFile(Icon); } }
     }
 
     public class BarsMenuItem : MenuItem {
     }
 
-    public class ColumnsMenuItem : MenuItem {
+    public class ShowcaseMenuItem : MenuItem {
     }
 
-    public class ScatterPlotsMenuItem : MenuItem {
-    }
 }
 

@@ -27,6 +27,11 @@
     <Folder Include="$(MSBuildThisFileDirectory)DataViz\" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)index.html" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\showcase.html">
+      <LogicalName>ChartPerformance.Showcase.html</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\bars.html">
+      <LogicalName>ChartPerformance.Bars.html</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

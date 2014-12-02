@@ -21,7 +21,7 @@ namespace ChartPerformance.Pages
             var htmlSource = new HtmlWebViewSource ();
 
             var assembly = typeof(ChartPage).GetTypeInfo().Assembly;
-            Stream stream = assembly.GetManifestResourceStream("ChartPerformance.index.html");
+            Stream stream = assembly.GetManifestResourceStream("ChartPerformance." + title +  ".html");
             string text = "";
             using (var reader = new System.IO.StreamReader (stream)) {
                 text = reader.ReadToEnd ();

@@ -48,8 +48,7 @@ namespace ChartPerformance.Pages
 
             // Menu item list
             MenuItems.Add(new BarsMenuItem());
-            MenuItems.Add(new ColumnsMenuItem());
-            MenuItems.Add(new ScatterPlotsMenuItem());
+            MenuItems.Add(new ShowcaseMenuItem());
 
             Menu = new ListView {
                 ItemsSource = MenuItems,

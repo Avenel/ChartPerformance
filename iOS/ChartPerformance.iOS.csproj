@@ -106,6 +106,9 @@
     <BundleResource Include="Resources\column.png" />
     <BundleResource Include="Resources\scatterplot.png" />
     <BundleResource Include="Helpers\BaseUrl_iOS.cs" />
+    <BundleResource Include="Resources\bullet.js" />
+    <BundleResource Include="Resources\bullets.json" />
+    <BundleResource Include="Resources\stocks.csv" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

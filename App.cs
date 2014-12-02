@@ -1,6 +1,8 @@
 ﻿using System;
 using Xamarin.Forms;
 
+using ChartPerformance.Pages;
+
 namespace ChartPerformance
 {
     public static class App

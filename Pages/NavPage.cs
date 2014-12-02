@@ -2,7 +2,7 @@
 
 using Xamarin.Forms;
 
-namespace ChartPerformance
+namespace ChartPerformance.Pages
 {
     public class NavPage : NavigationPage
     {

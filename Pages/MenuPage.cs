@@ -11,7 +11,7 @@ using Xamarin.Forms;
 using ChartPerformance.ViewModels;
 using ChartPerformance.Views;
 
-namespace ChartPerformance
+namespace ChartPerformance.Pages
 {
     public class MenuPage : ContentPage
     {
@@ -25,7 +25,7 @@ namespace ChartPerformance
             Title = "Menü";
             Icon = Device.OS == TargetPlatform.iOS ? "menu.png" : null;
 
-            BackgroundColor = Color.FromHex("333333");
+            BackgroundColor = Color.FromHex("FFFFFF");
 
             // Layout
             var layout = new StackLayout { Spacing = 0, VerticalOptions = LayoutOptions.FillAndExpand };
@@ -54,13 +54,12 @@ namespace ChartPerformance
             Menu = new ListView {
                 ItemsSource = MenuItems,
                 VerticalOptions = LayoutOptions.FillAndExpand,
-                BackgroundColor = Color.Transparent,
+                BackgroundColor = Color.Transparent
             };
 
             // Menu Cell
             var cell = new DataTemplate(typeof(DarkTextCell));
             cell.SetBinding(TextCell.TextProperty, "Title");
-            cell.SetBinding(TextCell.DetailProperty, "Count");
             cell.SetBinding(ImageCell.ImageSourceProperty, "IconSource");
             cell.SetValue(VisualElement.BackgroundColorProperty, Color.Transparent);
             Menu.ItemTemplate = cell;

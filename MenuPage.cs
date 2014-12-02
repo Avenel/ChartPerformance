@@ -1,29 +1,87 @@
 ﻿using System;
+using System.Collections.ObjectModel;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Diagnostics;
+
 using Xamarin.Forms;
+
+using ChartPerformance.ViewModels;
+using ChartPerformance.Views;
 
 namespace ChartPerformance
 {
     public class MenuPage : ContentPage
     {
 
+        readonly List<MenuItem> MenuItems = new List<MenuItem>();
+        public ListView Menu { get; set; }
+
         public MenuPage(MasterDetailPage root)
         {
+            // General
             Title = "Menü";
             Icon = Device.OS == TargetPlatform.iOS ? "menu.png" : null;
-            Content = new StackLayout {
-                Children = { MenuLink("Bars"), MenuLink("Columns"), MenuLink("Scatter Plot") }
+
+            BackgroundColor = Color.FromHex("333333");
+
+            // Layout
+            var layout = new StackLayout { Spacing = 0, VerticalOptions = LayoutOptions.FillAndExpand };
+
+            // Menu title
+            var menuLabel = new ContentView {
+                Padding = new Thickness(10, 36, 0, 5),
+                Content = new Xamarin.Forms.Label {
+                    TextColor = Color.FromHex("AAAAAA"),
+                    Text = "MENU", 
+                }
             };
+
+            Device.OnPlatform (
+                iOS: () => ((Xamarin.Forms.Label)menuLabel.Content).Font = Font.SystemFontOfSize (NamedSize.Micro),
+                Android: () => ((Xamarin.Forms.Label)menuLabel.Content).Font = Font.SystemFontOfSize (NamedSize.Medium)
+            );
+
+            layout.Children.Add(menuLabel);
+
+            // Menu item list
+            MenuItems.Add(new BarsMenuItem());
+            MenuItems.Add(new ColumnsMenuItem());
+            MenuItems.Add(new ScatterPlotsMenuItem());
+
+            Menu = new ListView {
+                ItemsSource = MenuItems,
+                VerticalOptions = LayoutOptions.FillAndExpand,
+                BackgroundColor = Color.Transparent,
+            };
+
+            // Menu Cell
+            var cell = new DataTemplate(typeof(DarkTextCell));
+            cell.SetBinding(TextCell.TextProperty, "Title");
+            cell.SetBinding(TextCell.DetailProperty, "Count");
+            cell.SetBinding(ImageCell.ImageSourceProperty, "IconSource");
+            cell.SetValue(VisualElement.BackgroundColorProperty, Color.Transparent);
+            Menu.ItemTemplate = cell;
+
+            // Eventlistener on item
+            Menu.ItemSelected += (sender, e) => {
+                App.MDPage.Detail = NavigateTo(e.SelectedItem as MenuItem);
+                App.MDPage.IsPresented = false;
+            };
+            layout.Children.Add(Menu);
+
+
+            Content = layout;
         }
 
-        private Button MenuLink(string name)
+        /**
+         * Creates Button for linking to its corresponding Page
+         */
+        private Page NavigateTo(MenuItem item)
         {
-            return new Button {
-                Text = name,
-                Command = new Command(o => {
-                    App.MDPage.Detail = new NavPage(App.CreateContentPage(name));
-                    App.MDPage.IsPresented = false;
-                }),
-            };
+            return new NavPage(App.CreateContentPage(item.Title));
         }
 
     }

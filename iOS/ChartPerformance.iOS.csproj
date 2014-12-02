@@ -100,6 +100,11 @@
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\Default-568h%402x.png" />
+    <BundleResource Include="Resources\menu.png" />
+    <BundleResource Include="Resources\menu%402x.png" />
+    <BundleResource Include="Resources\bar.png" />
+    <BundleResource Include="Resources\column.png" />
+    <BundleResource Include="Resources\scatterplot.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

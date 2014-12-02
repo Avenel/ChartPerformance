@@ -14,8 +14,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)ChartPage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\Color.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)NavPage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewModels\MenuItem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Views\DarkTextCell.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Helpers\" />
+    <Folder Include="$(MSBuildThisFileDirectory)ViewModels\" />
+    <Folder Include="$(MSBuildThisFileDirectory)Views\" />
   </ItemGroup>
 </Project>

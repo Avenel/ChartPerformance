@@ -9,7 +9,13 @@ namespace ChartPerformance
         {
 
             Title = title;
-            Content = Link(title + ".sub");
+            Content = new WebView {
+                Source = new UrlWebViewSource
+                {
+                    Url = "http://blog.xamarin.com/",
+                },
+                VerticalOptions = LayoutOptions.FillAndExpand
+            };
 
         }
 

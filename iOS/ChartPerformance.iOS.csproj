@@ -109,6 +109,7 @@
     <BundleResource Include="Resources\bullet.js" />
     <BundleResource Include="Resources\bullets.json" />
     <BundleResource Include="Resources\stocks.csv" />
+    <BundleResource Include="Resources\d3.v3.min.js" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

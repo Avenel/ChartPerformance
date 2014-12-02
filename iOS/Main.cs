@@ -5,7 +5,7 @@ using System.Linq;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 
-namespace ChartPerformancetester.iOS
+namespace FormsMenuIcon.iOS
 {
 	public class Application
 	{

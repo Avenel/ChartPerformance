@@ -2,7 +2,6 @@
 
 using Android.App;
 using Android.Content;
-using Android.Content.PM;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
@@ -11,9 +10,9 @@ using Android.OS;
 using Xamarin.Forms.Platform.Android;
 
 
-namespace ChartPerformancetester.Android
+namespace ChartPerformance.Android
 {
-	[Activity (Label = "ChartPerformancetester.Android.Android", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]
+	[Activity (Label = "ChartPerformance.Android.Android", MainLauncher = true)]
 	public class MainActivity : AndroidActivity
 	{
 		protected override void OnCreate (Bundle bundle)

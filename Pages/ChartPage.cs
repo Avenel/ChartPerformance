@@ -30,7 +30,8 @@ namespace ChartPerformance.Pages
 
             if (Device.OS != TargetPlatform.iOS) {
                 // the BaseUrlWebViewRenderer does this for iOS, until bug is fixed
-                htmlSource.BaseUrl = DependencyService.Get<IBaseUrl>().Get();
+                var baseUrl = DependencyService.Get<IBaseUrl>();
+                htmlSource.BaseUrl = baseUrl.Get();
             }
 
             browser.Source = htmlSource;

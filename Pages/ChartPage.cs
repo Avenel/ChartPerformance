@@ -33,7 +33,7 @@ namespace ChartPerformance.Pages
                 var baseUrl = DependencyService.Get<IBaseUrl>();
                 htmlSource.BaseUrl = baseUrl.Get();
             }
-
+                
             browser.Source = htmlSource;
 
             Content = browser;

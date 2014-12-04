@@ -23,5 +23,15 @@ namespace ChartPerformance.ViewModels
     public class ShowcaseMenuItem : MenuItem {
     }
 
+    public class RotatingGlobeSVGMenuItem : MenuItem {
+    }
+
+    public class RotatingGlobeCanvasMenuItem : MenuItem {
+    }
+
+    public class RotatingGlobeWebGLMenuItem : MenuItem {
+    }
+
 }
+
 

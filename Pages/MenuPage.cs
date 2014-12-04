@@ -49,6 +49,10 @@ namespace ChartPerformance.Pages
             // Menu item list
             MenuItems.Add(new BarsMenuItem());
             MenuItems.Add(new ShowcaseMenuItem());
+            MenuItems.Add(new RotatingGlobeSVGMenuItem());
+            MenuItems.Add(new RotatingGlobeCanvasMenuItem());
+            MenuItems.Add(new RotatingGlobeWebGLMenuItem());
+
 
             Menu = new ListView {
                 ItemsSource = MenuItems,

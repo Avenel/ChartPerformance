@@ -103,13 +103,29 @@
     <BundleResource Include="Resources\menu.png" />
     <BundleResource Include="Resources\menu%402x.png" />
     <BundleResource Include="Resources\bar.png" />
-    <BundleResource Include="Resources\column.png" />
     <BundleResource Include="Resources\scatterplot.png" />
     <BundleResource Include="Helpers\BaseUrl_iOS.cs" />
-    <BundleResource Include="Resources\bullet.js" />
-    <BundleResource Include="Resources\bullets.json" />
-    <BundleResource Include="Resources\stocks.csv" />
-    <BundleResource Include="Resources\d3.v3.min.js" />
+    <BundleResource Include="..\DataViz\bullet.js">
+      <Link>Resources\bullet.js</Link>
+    </BundleResource>
+    <BundleResource Include="..\DataViz\bullets.json">
+      <Link>Resources\bullets.json</Link>
+    </BundleResource>
+    <BundleResource Include="..\DataViz\d3.v3.min.js">
+      <Link>Resources\d3.v3.min.js</Link>
+    </BundleResource>
+    <BundleResource Include="..\DataViz\stocks.csv">
+      <Link>Resources\stocks.csv</Link>
+    </BundleResource>
+    <BundleResource Include="..\DataViz\world-110m.json">
+      <Link>Resources\world-110m.json</Link>
+    </BundleResource>
+    <BundleResource Include="..\DataViz\compr_world.json">
+      <Link>Resources\compr_world.json</Link>
+    </BundleResource>
+    <BundleResource Include="..\DataViz\map.js">
+      <Link>Resources\map.js</Link>
+    </BundleResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

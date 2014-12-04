@@ -85,9 +85,26 @@
     <Folder Include="Helpers\" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidAsset Include="Assets\bullet.js" />
-    <AndroidAsset Include="Assets\bullets.json" />
-    <AndroidAsset Include="Assets\d3.v3.min.js" />
-    <AndroidAsset Include="Assets\stocks.csv" />
+    <AndroidAsset Include="..\DataViz\bullet.js">
+      <Link>Assets\bullet.js</Link>
+    </AndroidAsset>
+    <AndroidAsset Include="..\DataViz\bullets.json">
+      <Link>Assets\bullets.json</Link>
+    </AndroidAsset>
+    <AndroidAsset Include="..\DataViz\d3.v3.min.js">
+      <Link>Assets\d3.v3.min.js</Link>
+    </AndroidAsset>
+    <AndroidAsset Include="..\DataViz\stocks.csv">
+      <Link>Assets\stocks.csv</Link>
+    </AndroidAsset>
+    <AndroidAsset Include="..\DataViz\world-110m.json">
+      <Link>Assets\world-110m.json</Link>
+    </AndroidAsset>
+    <AndroidAsset Include="..\DataViz\compr_world.json">
+      <Link>Assets\compr_world.json</Link>
+    </AndroidAsset>
+    <AndroidAsset Include="..\DataViz\map.js">
+      <Link>Assets\map.js</Link>
+    </AndroidAsset>
   </ItemGroup>
 </Project>

@@ -36,6 +36,8 @@ namespace ChartPerformance.Pages
                 
             browser.Source = htmlSource;
 
+            Padding = new Thickness (10, 10, 10, 10);
+
             Content = browser;
         }
 

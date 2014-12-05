@@ -5,7 +5,6 @@
     <style>
         body {
             margin: 0;
-            padding: 20px;
             background-color: #FFFFFF;
         }
     </style>
@@ -29,11 +28,16 @@
         // create an new instance of a pixi stage
         var stage = new PIXI.Stage(0xFFFFFF, true);
 
-        var w = 320,
-            h = 480;
+        var w = 300,
+            h = 460;
+
         var renderer = PIXI.autoDetectRenderer(w, h);
 
-        var graphics = new PIXI.Graphics();
+        // container element for bulletGraphics
+        var graphics = new Array();
+
+        // indicates if animation should be active or not (one should not animate, if the viz is already static)
+        var global_animate = true
 
         // add render view to DOM
         document.body.appendChild(renderer.view);
@@ -43,9 +47,21 @@
             .attr("width", w)
             .attr("height", h);
 
-        function scale(value) {
-            return value;
-        }
+        // scaling for bullet width
+        var bulletWidth = d3.scale.linear()
+            .domain( 
+                d3.extent( bullets.map( 
+                    function( el ) {
+                        return el.ranges[0];
+                    })
+                ) 
+            )
+            .range( [0, w]);
+
+        // calculate yPosition of bullet
+        var yPos = d3.scale.ordinal()
+            .domain( d3.range( bullets.length ) )
+            .rangeRoundBands( [0, h], 0.1 );
 
         // append bullet objects to sketch
         var bullet = sketch.selectAll("rect")
@@ -53,64 +69,90 @@
             .enter()
             .append( 'rect' )
             .attr({
-                x: 10,
+                x: 0,
                 y: function( d, i ) {
-                 return  i*20;
+                 return  yPos(i);
                 },
                 width: function( d, i ) {
-                    return 0; //scale(d.ranges[0]);
+                    return 0;
                 },
-                height: 10,
+                height: yPos.rangeBand(),
                 fill: 'red',
                 max_width: function( d, i ) {
-                    return scale(d.ranges[0]);
+                    return bulletWidth(d.ranges[0]);
+                },
+                value: function( d, i ) {
+                    return d.ranges[0];
                 },
                 animate: true
             })
             .transition()
                 .duration(1000)
                 .attr("width", function ( d, i ) {
-                    return scale(d.ranges[0]);
+                    return bulletWidth(d.ranges[0]);
                 })
             .call(drawBullets);
             
         // insert bullets into pixi canvas
         function drawBullets() {
             var root = d3.select("sketch")[0][0];
-            graphics.beginFill(0xB0C4DE);
+
             for (var child = root.firstChild; child; child = child.nextSibling) {
                 drawBullet(child);
             }    
-            graphics.endFill();
         };
-        
 
         function drawBullet (element) {
-            graphics.drawRect(  parseInt(element.getAttribute("x")), parseInt(element.getAttribute("y")), 
+            var graphic = new PIXI.Graphics();
+            graphic.beginFill(0xB0C4DE);
+            graphic.drawRect(  parseInt(element.getAttribute("x")), parseInt(element.getAttribute("y")), 
                                 parseInt(element.getAttribute("width")), parseInt(element.getAttribute("height")));
+            graphic.endFill();
+
+            // make the graphic interactive..
+            graphic.interactive = true;
+
+            // set the mousedown and touchstart callback..
+            graphic.mousedown = graphic.touchstart = function(data) {
+                alert(parseInt(element.getAttribute("value")));
+            };
+
+            graphics[graphics.length] = graphic;
+            stage.addChild(graphic);
         };
 
 
-        var global_animate = true
         function updateBullets() {
             var root = d3.select("sketch")[0][0];
             var i = 0;
-            graphics.clear();
-            graphics.beginFill(0xB0C4DE);
+            var animate_false = 0;
+            
             for (var child = root.firstChild; child; child = child.nextSibling) {
-                if (parseBoolean(child.getAttribute("animate"))) {
-                    graphics.drawRect(  parseInt(child.getAttribute("x")), parseInt(child.getAttribute("y")), 
-                                parseInt(child.getAttribute("width")), parseInt(child.getAttribute("height")));
-                    if (child.getAttribute("width") == child.getAttribute("max_width")) {
-                        child.setAttribute("animate", false);
-                    }
-                }
-                global_animate = global_animate & parseBoolean(child.getAttribute("animate"));
-            }
-            graphics.endFill();
-        }
+                var graphic = graphics[i];
 
-        stage.addChild(graphics);
+                if (parseBoolean(child.getAttribute("animate"))) {
+                    graphic.clear();
+                    graphic.beginFill(0xB0C4DE);
+
+                    graphic.drawRect(  parseInt(child.getAttribute("x")), parseInt(child.getAttribute("y")), 
+                                parseInt(child.getAttribute("width")), parseInt(child.getAttribute("height")));
+
+                    graphic.endFill();
+                }
+
+                if (child.getAttribute("width") == child.getAttribute("max_width")) {
+                    child.setAttribute("animate", false);
+                    animate_false++;
+                }
+                i++;
+            }
+            
+
+            // if every bullet was animated, turn off animation
+            if (animate_false == root.children.length) {
+                global_animate = false;
+            }
+        }
 
         // run the render loop
         requestAnimFrame(animate);
@@ -118,7 +160,7 @@
         renderer.render(stage);
         function animate() {
             if (!global_animate) return;
-            
+
             updateBullets();
             renderer.render(stage);
             requestAnimFrame(animate);

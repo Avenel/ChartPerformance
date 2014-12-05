@@ -106,5 +106,11 @@
     <AndroidAsset Include="..\DataViz\map.js">
       <Link>Assets\map.js</Link>
     </AndroidAsset>
+    <AndroidAsset Include="..\DataViz\BarsPixi.html">
+      <Link>Assets\BarsPixi.html</Link>
+    </AndroidAsset>
+    <AndroidAsset Include="..\DataViz\pixi.js">
+      <Link>Assets\pixi.js</Link>
+    </AndroidAsset>
   </ItemGroup>
 </Project>

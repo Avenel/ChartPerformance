@@ -1,0 +1,133 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>pixi.js barcharts example</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #FFFFFF;
+        }
+    </style>
+    
+    <script src="d3.v3.min.js"></script>
+    <script src="pixi.js"></script>
+    
+</head>
+<body>
+    <script>
+        // data
+        var bullets = 
+            [
+              {"title":"Revenue","subtitle":"US$, in thousands","ranges":[150,225,300],"measures":[220,270],"markers":[250]},
+              {"title":"Profit","subtitle":"%","ranges":[20,25,30],"measures":[21,23],"markers":[26]},
+              {"title":"Order Size","subtitle":"US$, average","ranges":[350,500,600],"measures":[100,320],"markers":[550]},
+              {"title":"New Customers","subtitle":"count","ranges":[1400,2000,2500],"measures":[1000,1650],"markers":[2100]},
+              {"title":"Satisfaction","subtitle":"out of 5","ranges":[3.5,4.25,5],"measures":[3.2,4.7],"markers":[4.4]}
+            ] 
+
+        // create an new instance of a pixi stage
+        var stage = new PIXI.Stage(0xFFFFFF, true);
+
+        var w = 320,
+            h = 480;
+        var renderer = PIXI.autoDetectRenderer(w, h);
+
+        var graphics = new PIXI.Graphics();
+
+        // add render view to DOM
+        document.body.appendChild(renderer.view);
+    
+        // Add our "custom" sketch element to the body.
+        var sketch = d3.select("body").append("custom:sketch")
+            .attr("width", w)
+            .attr("height", h);
+
+        function scale(value) {
+            return value;
+        }
+
+        // append bullet objects to sketch
+        var bullet = sketch.selectAll("rect")
+            .data(bullets)
+            .enter()
+            .append( 'rect' )
+            .attr({
+                x: 10,
+                y: function( d, i ) {
+                 return  i*20;
+                },
+                width: function( d, i ) {
+                    return 0; //scale(d.ranges[0]);
+                },
+                height: 10,
+                fill: 'red',
+                max_width: function( d, i ) {
+                    return scale(d.ranges[0]);
+                },
+                animate: true
+            })
+            .transition()
+                .duration(1000)
+                .attr("width", function ( d, i ) {
+                    return scale(d.ranges[0]);
+                })
+            .call(drawBullets);
+            
+        // insert bullets into pixi canvas
+        function drawBullets() {
+            var root = d3.select("sketch")[0][0];
+            graphics.beginFill(0xB0C4DE);
+            for (var child = root.firstChild; child; child = child.nextSibling) {
+                drawBullet(child);
+            }    
+            graphics.endFill();
+        };
+        
+
+        function drawBullet (element) {
+            graphics.drawRect(  parseInt(element.getAttribute("x")), parseInt(element.getAttribute("y")), 
+                                parseInt(element.getAttribute("width")), parseInt(element.getAttribute("height")));
+        };
+
+
+        var global_animate = true
+        function updateBullets() {
+            var root = d3.select("sketch")[0][0];
+            var i = 0;
+            graphics.clear();
+            graphics.beginFill(0xB0C4DE);
+            for (var child = root.firstChild; child; child = child.nextSibling) {
+                if (parseBoolean(child.getAttribute("animate"))) {
+                    graphics.drawRect(  parseInt(child.getAttribute("x")), parseInt(child.getAttribute("y")), 
+                                parseInt(child.getAttribute("width")), parseInt(child.getAttribute("height")));
+                    if (child.getAttribute("width") == child.getAttribute("max_width")) {
+                        child.setAttribute("animate", false);
+                    }
+                }
+                global_animate = global_animate & parseBoolean(child.getAttribute("animate"));
+            }
+            graphics.endFill();
+        }
+
+        stage.addChild(graphics);
+
+        // run the render loop
+        requestAnimFrame(animate);
+
+        renderer.render(stage);
+        function animate() {
+            if (!global_animate) return;
+            
+            updateBullets();
+            renderer.render(stage);
+            requestAnimFrame(animate);
+        }
+
+        function parseBoolean(str) {
+            return (str == "true");
+        }
+
+    </script>
+</body>
+</html>

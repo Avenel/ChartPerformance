@@ -132,6 +132,12 @@
     <BundleResource Include="..\DataViz\pixi.js">
       <Link>Resources\pixi.js</Link>
     </BundleResource>
+    <BundleResource Include="..\DataViz\chartLib.js">
+      <Link>Resources\chartLib.js</Link>
+    </BundleResource>
+    <BundleResource Include="..\DataViz\pixi.dev.js">
+      <Link>Resources\pixi.dev.js</Link>
+    </BundleResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

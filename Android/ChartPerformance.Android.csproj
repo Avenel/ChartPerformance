@@ -112,5 +112,11 @@
     <AndroidAsset Include="..\DataViz\pixi.js">
       <Link>Assets\pixi.js</Link>
     </AndroidAsset>
+    <AndroidAsset Include="..\DataViz\chartLib.js">
+      <Link>Assets\chartLib.js</Link>
+    </AndroidAsset>
+    <AndroidAsset Include="..\DataViz\pixi.dev.js">
+      <Link>Assets\pixi.dev.js</Link>
+    </AndroidAsset>
   </ItemGroup>
 </Project>

@@ -21,17 +21,26 @@ ChartLib.Bullet = function (element) {
 
 	// make the graphic interactive..
     this.interactive = true;
+	
+    // bind element 
+	this.element = element;
 
-    this.init = function () {
+	// flag for updateAnimation
+	this.animate = true;
+
+    this.init = function (element) {
     	// measures = [last, current, plan]
 		this.measures = [ parseFloat(element.getAttribute("val_last")), 
 	                     parseFloat(element.getAttribute("val_current")),
 	                     parseFloat(element.getAttribute("val_plan")) ];
 
-	    this.bullet_x = parseFloat(element.getAttribute("x"));
-	    this.bullet_y = parseFloat(element.getAttribute("y"));
+       	// have to use underscore as a prefix due to weired issues (perhaps value was overidden by another call....)
+	    this._x = parseFloat(element.getAttribute("x"));
+	    this._y = parseFloat(element.getAttribute("y"));
+	    this._height = parseFloat(element.getAttribute("height"));
 
-	    this.h = parseFloat(element.getAttribute("height"));
+	    // actual bullet width of current val
+	    this._width = parseFloat(element.getAttribute("width"));
 
 	    this.range = [0, parseFloat(element.getAttribute("max_width"))];
 
@@ -44,6 +53,9 @@ ChartLib.Bullet = function (element) {
 	    var measurez = [this.measures[0], this.measures[1], this.measures[2]];
 	    measurez.sort(d3.descending);
 	    this.domain = [0, Math.max(this.tl_range[0], measurez[2])];
+
+	    // set animate to true, because there is new data in town!
+	    this.animate = true;
     };
 
 	// calculate the width of a given value (linear scaling)
@@ -55,40 +67,43 @@ ChartLib.Bullet = function (element) {
     };
 
 	this.draw = function () {
+		this.clear();
+
 		// "traffic light" - green
 		this.beginFill(0xEEEEEE);
-        this.drawRect( this.bullet_x, this.bullet_y, this.calc_width(this.tl_range[0]), this.h);
+        this.drawRect( this._x, this._y, this.calc_width(this.tl_range[0]), this._height);
 
         // "traffic light" - yellow
         this.beginFill(0xDDDDDD);
-        this.drawRect( this.bullet_x, this.bullet_y, this.calc_width(this.tl_range[1]), this.h);
+        this.drawRect( this._x, this._y, this.calc_width(this.tl_range[1]), this._height);
 
         // "traffic light" - red
         this.beginFill(0xCCCCCC);
-        this.drawRect( this.bullet_x, this.bullet_y, this.calc_width(this.tl_range[2]), this.h);
+        this.drawRect( this._x, this._y, this.calc_width(this.tl_range[2]), this._height);
 
         // plan val
         this.beginFill(0xB0C4DE);
-        this.drawRect( this.bullet_x, this.bullet_y + (this.h * 0.25), this.calc_width(this.measures[2], this.range), this.h * 0.5);
+        this.drawRect( this._x, this._y + (this._height * 0.25), this.calc_width(this.measures[2], this.range), this._height * 0.5);
 
         // current val
         this.beginFill(0x4682B4);
-		this.drawRect( this.bullet_x, this.bullet_y + (this.h * 0.25), this.calc_width(this.measures[1], this.range), this.h * 0.5);
+		this.drawRect( this._x, this._y + (this._height * 0.25), this.calc_width(this._width, this.range), this._height * 0.5);
 
         // last val
         this.beginFill(0x000000);
-        this.drawRect( this.calc_width(this.measures[0], this.range), this.bullet_y + this.h * 0.15, 2, this.h * 0.7);
+        this.drawRect( this.calc_width(this.measures[0], this.range), this._y + this._height * 0.15, 2, this._height * 0.7);
 
         this.endFill();
 	};
 
 	// update values and redraw
-	this.update = function () {
-		this.init();
+	this.update = function (element) {
+		this.init(element);
+		this.draw();
 	};
 
 	// draw chart
-	this.init();
+	this.init(element);
 	this.draw();
 }
 

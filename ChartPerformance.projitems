@@ -52,6 +52,8 @@
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\BarsPixi.html">
       <LogicalName>ChartPerformance.BarsPixi.html</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\chartLib.js" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\pixi.dev.js" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)handleRessources.sh" />

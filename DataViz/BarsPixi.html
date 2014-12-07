@@ -49,14 +49,6 @@
             .attr("width", w)
             .attr("height", h);
 
-        // scaling for bullet width
-        function bulletWidth (val, range) {
-            var width = d3.scale.linear()
-                    .domain(range)
-                    .range( [0, w]);
-            return width(val);
-        }
-
         // calculate yPosition of bullet
         var yPos = d3.scale.ordinal()
             .domain( d3.range( bullets.length ) )
@@ -95,14 +87,15 @@
                     return d.ranges[2];
                 },
                 animate: true
-            });
+            })
+            .call(addBullets);
 
         bullet.transition()
             .duration(1000)
             .attr("width", function ( d, i ) {
-                return bulletWidth(d.measures[0], [0, d.ranges[2]]);
+                return d.measures[0];
             })
-            .call(addBullets);
+            .each('end', pauseBulletUpdate);
             
         // insert bullets into pixi canvas
         function addBullets() {
@@ -112,19 +105,33 @@
             }    
         };
 
-        function getRangeOfBullet (element) {
-            var range = [0, parseFloat(element.getAttribute("range_green"))];
-            return range;
+        function updateBullets () {
+            var root = d3.select("sketch")[0][0];
+            var i = 0;
+            for (var child = root.firstChild; child; child = child.nextSibling) {
+                if (i < stage.children.length) {
+                    var b = stage.children[i];
+                    if (b.animate) {
+                        b.update(child);
+                    }
+                }
+                i++;
+            }
         }
+
+        function pauseBulletUpdate () {
+            for (var i = 0; i < stage.children.length; i++) {
+                stage.children[i].animate = false;
+            }
+        };
 
         // run the render loop
         requestAnimFrame(animate);
 
         renderer.render(stage);
-        function animate() {
-            if (!global_animate) return;
 
-            // updateBullets();
+        function animate() {
+            updateBullets();
             renderer.render(stage);
             requestAnimFrame(animate);
         }

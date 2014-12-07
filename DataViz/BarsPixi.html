@@ -10,7 +10,8 @@
     </style>
     
     <script src="d3.v3.min.js"></script>
-    <script src="pixi.js"></script>
+    <script src="pixi.dev.js"></script>
+    <script src="chartLib.js"></script>
     
 </head>
 <body>
@@ -53,7 +54,6 @@
             var width = d3.scale.linear()
                     .domain(range)
                     .range( [0, w]);
-            //  console.log(width(val));
             return width(val);
         }
 
@@ -63,9 +63,8 @@
             .rangeRoundBands( [0, h], 0.4 );
 
         // append bullet objects to sketch
-        var bullet = sketch.selectAll("bullet")
-            .data(bullets)
-            .enter()
+        var bullet = sketch.selectAll("bullet").data(bullets);
+        bullet.enter()
             .append( 'bullet' )
             .attr({
                 x: 0,
@@ -76,9 +75,7 @@
                     return 0;
                 },
                 height: yPos.rangeBand(),
-                max_width: function( d, i ) {
-                    return bulletWidth(d.measures[0], [0, d.ranges[2]]);
-                },
+                max_width: w,
                 val_current: function( d, i ) {
                     return d.measures[0];
                 },
@@ -98,109 +95,26 @@
                     return d.ranges[2];
                 },
                 animate: true
+            });
+
+        bullet.transition()
+            .duration(1000)
+            .attr("width", function ( d, i ) {
+                return bulletWidth(d.measures[0], [0, d.ranges[2]]);
             })
-            .transition()
-                .duration(1000)
-                .attr("width", function ( d, i ) {
-                    return bulletWidth(d.measures[0], [0, d.ranges[2]]);
-                })
-            .call(drawBullets);
+            .call(addBullets);
             
         // insert bullets into pixi canvas
-        function drawBullets() {
+        function addBullets() {
             var root = d3.select("sketch")[0][0];
-
             for (var child = root.firstChild; child; child = child.nextSibling) {
-                drawBullet(child);
+                stage.addChild(new ChartLib.Bullet(child));
             }    
         };
 
         function getRangeOfBullet (element) {
             var range = [0, parseFloat(element.getAttribute("range_green"))];
             return range;
-        }
-
-        function drawBullet (element) {
-            var graphic = new PIXI.Graphics();
-
-            // ranges
-            var range = getRangeOfBullet(element);
-
-            graphic.beginFill(0xEEEEEE);
-            graphic.drawRect(   parseFloat(element.getAttribute("x")), parseFloat(element.getAttribute("y")), 
-                                bulletWidth(parseFloat(element.getAttribute("range_green")), range), parseFloat(element.getAttribute("height")));
-
-            graphic.beginFill(0xDDDDDD);
-            graphic.drawRect(   parseFloat(element.getAttribute("x")), parseFloat(element.getAttribute("y")), 
-                                bulletWidth(parseFloat(element.getAttribute("range_yellow")), range), parseFloat(element.getAttribute("height")));
-
-            graphic.beginFill(0xCCCCCC);
-            graphic.drawRect(   parseFloat(element.getAttribute("x")), parseFloat(element.getAttribute("y")), 
-                                bulletWidth(parseFloat(element.getAttribute("range_red")), range), parseFloat(element.getAttribute("height")));
-
-            // current val
-            graphic.beginFill(0x4682B4);
-            graphic.drawRect(   parseFloat(element.getAttribute("x")), parseFloat(element.getAttribute("y")), 
-                                parseFloat(element.getAttribute("width")), parseFloat(element.getAttribute("height")));
-            
-            // plan val
-            graphic.beginFill(0xB0C4DE);
-            graphic.drawRect(   parseFloat(element.getAttribute("x")), 
-                                parseFloat(element.getAttribute("y")) + (parseFloat(element.getAttribute("height")) * 0.25), 
-                                bulletWidth(parseFloat(element.getAttribute("val_plan")), range), parseFloat(element.getAttribute("height")) * 0.5);
-
-            // last val
-            graphic.beginFill(0x000000);
-            graphic.drawRect(   bulletWidth(parseFloat(element.getAttribute("val_last")), range), 
-                                parseFloat(element.getAttribute("y")) + (parseFloat(element.getAttribute("height")) * 0.15), 
-                                2, parseFloat(element.getAttribute("height")) * 0.7);
-
-            graphic.endFill();
-
-            // make the graphic interactive..
-            graphic.interactive = true;
-
-            // set the mousedown and touchstart callback..
-            graphic.mousedown = graphic.touchstart = function(data) {
-                alert(parseFloat(element.getAttribute("val_current")));
-            };
-
-            graphics[graphics.length] = graphic;
-            stage.addChild(graphic);
-        };
-
-
-        function updateBullets() {
-            var root = d3.select("sketch")[0][0];
-            var i = 0;
-            var animate_false = 0;
-            
-            for (var child = root.firstChild; child; child = child.nextSibling) {
-                var graphic = graphics[i];
-
-                if (parseBoolean(child.getAttribute("animate"))) {
-                    // graphic.clear();
-                    graphic.beginFill(0x4682B4);
-
-                    graphic.drawRect(  parseFloat(child.getAttribute("x")), 
-                            parseFloat(child.getAttribute("y")) + (parseFloat(child.getAttribute("height")) * 0.25), 
-                            parseFloat(child.getAttribute("width")), parseFloat(child.getAttribute("height")) * 0.5);
-
-                    graphic.endFill();
-                }
-
-                if (child.getAttribute("width") == child.getAttribute("max_width")) {
-                    child.setAttribute("animate", false);
-                    animate_false++;
-                }
-                i++;
-            }
-            
-
-            // if every bullet was animated, turn off animation
-            if (animate_false == root.children.length) {
-                global_animate = false;
-            }
         }
 
         // run the render loop
@@ -210,34 +124,13 @@
         function animate() {
             if (!global_animate) return;
 
-            updateBullets();
+            // updateBullets();
             renderer.render(stage);
             requestAnimFrame(animate);
         }
 
         function parseBoolean(str) {
             return (str == "true");
-        }
-
-        // Random values button . WIP
-        function randomize(d) {
-            if (!d.randomizer) d.randomizer = randomizer(d);
-            d.ranges = d.ranges.map(d.randomizer);
-            d.markers = d.markers.map(d.randomizer);
-            d.measures = d.measures.map(d.randomizer);
-            return d;
-        }
-
-        function randomizer(d) {
-            var k = d3.max(d.ranges) * .2;
-            return function(d) {
-                return Math.max(0, d + k * (Math.random() - .5));
-            };
-        }
-
-        function onRndButton() {
-            alert("rand");
-            bullet.datum(randomize).call(drawBullets); // TODO automatic transition
         }
     </script>
 </body>

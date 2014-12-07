@@ -93,7 +93,26 @@ ChartLib.Bullet = function (element) {
         this.beginFill(0x000000);
         this.drawRect( this.calc_width(this.measures[0], this.range), this._y + this._height * 0.15, 2, this._height * 0.7);
 
-        this.endFill();
+		this.endFill();
+
+        // axis
+        var rel = (this.range[1] / this.domain[1])
+        var steps = (rel > 8)? 8 : rel;
+        steps = (steps < 5)? 5 : steps;
+        var step = this.domain[1] / steps;
+        for (var i = 0; i < steps; i++) {
+			this.beginFill(0x000000);
+        	this.drawRect( this.calc_width(step*i, this.range), this._y + this._height, 1, this._height * 0.2);
+
+        	// only add text once
+        	if (this.children.length < steps) { 
+				var text = new PIXI.Text((step*i).toFixed(1), {font: 0.45 * this._height + "px Arial", fill:"black"});
+				text.position.x = this.calc_width(step*i, this.range);
+				text.position.y = this._y + this._height * 1.3;
+				this.addChild(text);
+			};
+        }
+
 	};
 
 	// update values and redraw

@@ -30,8 +30,8 @@
         // create an new instance of a pixi stage
         var stage = new PIXI.Stage(0xFFFFFF, true);
 
-        var w = 300,
-            h = 200;
+        var w = 400,
+            h = 300;
 
         var renderer = PIXI.autoDetectRenderer(w, h);
 
@@ -45,14 +45,14 @@
         document.body.appendChild(renderer.view);
     
         // Add our "custom" sketch element to the body.
-        var sketch = d3.select("body").append("custom:sketch")
+        var sketch = d3.select("body").append("cxustom:sketch")
             .attr("width", w)
             .attr("height", h);
 
         // calculate yPosition of bullet
         var yPos = d3.scale.ordinal()
             .domain( d3.range( bullets.length ) )
-            .rangeRoundBands( [0, h], 0.4 );
+            .rangeRoundBands( [0, h], 0.5 );
 
         // append bullet objects to sketch
         var bullet = sketch.selectAll("bullet").data(bullets);
@@ -96,6 +96,15 @@
                 return d.measures[0];
             })
             .each('end', pauseBulletUpdate);
+
+        var xAxis = d3.svg.axis()
+            .scale( 
+                d3.scale.linear()
+                    .domain([0, 300])
+                    .range( [0, 300]) 
+            )
+            .orient( 'top' );
+    
             
         // insert bullets into pixi canvas
         function addBullets() {

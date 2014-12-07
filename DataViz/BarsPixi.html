@@ -14,6 +14,7 @@
     
 </head>
 <body>
+    <!-- <button onclick="onRndButton();">Update</button> -->
     <script>
         // data
         var bullets = 
@@ -29,7 +30,7 @@
         var stage = new PIXI.Stage(0xFFFFFF, true);
 
         var w = 300,
-            h = 460;
+            h = 200;
 
         var renderer = PIXI.autoDetectRenderer(w, h);
 
@@ -48,26 +49,24 @@
             .attr("height", h);
 
         // scaling for bullet width
-        var bulletWidth = d3.scale.linear()
-            .domain( 
-                d3.extent( bullets.map( 
-                    function( el ) {
-                        return el.ranges[0];
-                    })
-                ) 
-            )
-            .range( [0, w]);
+        function bulletWidth (val, range) {
+            var width = d3.scale.linear()
+                    .domain(range)
+                    .range( [0, w]);
+            //  console.log(width(val));
+            return width(val);
+        }
 
         // calculate yPosition of bullet
         var yPos = d3.scale.ordinal()
             .domain( d3.range( bullets.length ) )
-            .rangeRoundBands( [0, h], 0.1 );
+            .rangeRoundBands( [0, h], 0.4 );
 
         // append bullet objects to sketch
-        var bullet = sketch.selectAll("rect")
+        var bullet = sketch.selectAll("bullet")
             .data(bullets)
             .enter()
-            .append( 'rect' )
+            .append( 'bullet' )
             .attr({
                 x: 0,
                 y: function( d, i ) {
@@ -77,19 +76,33 @@
                     return 0;
                 },
                 height: yPos.rangeBand(),
-                fill: 'red',
                 max_width: function( d, i ) {
-                    return bulletWidth(d.ranges[0]);
+                    return bulletWidth(d.measures[0], [0, d.ranges[2]]);
                 },
-                value: function( d, i ) {
+                val_current: function( d, i ) {
+                    return d.measures[0];
+                },
+                val_last: function ( d, i ) {
+                    return d.markers[0];
+                },
+                val_plan: function ( d, i ) {
+                    return d.measures[1];
+                },
+                range_red: function ( d, i ) {
                     return d.ranges[0];
+                },
+                range_yellow: function ( d, i ) {
+                    return d.ranges[1];
+                },
+                range_green: function ( d, i ) {
+                    return d.ranges[2];
                 },
                 animate: true
             })
             .transition()
                 .duration(1000)
                 .attr("width", function ( d, i ) {
-                    return bulletWidth(d.ranges[0]);
+                    return bulletWidth(d.measures[0], [0, d.ranges[2]]);
                 })
             .call(drawBullets);
             
@@ -102,11 +115,46 @@
             }    
         };
 
+        function getRangeOfBullet (element) {
+            var range = [0, parseFloat(element.getAttribute("range_green"))];
+            return range;
+        }
+
         function drawBullet (element) {
             var graphic = new PIXI.Graphics();
+
+            // ranges
+            var range = getRangeOfBullet(element);
+
+            graphic.beginFill(0xEEEEEE);
+            graphic.drawRect(   parseFloat(element.getAttribute("x")), parseFloat(element.getAttribute("y")), 
+                                bulletWidth(parseFloat(element.getAttribute("range_green")), range), parseFloat(element.getAttribute("height")));
+
+            graphic.beginFill(0xDDDDDD);
+            graphic.drawRect(   parseFloat(element.getAttribute("x")), parseFloat(element.getAttribute("y")), 
+                                bulletWidth(parseFloat(element.getAttribute("range_yellow")), range), parseFloat(element.getAttribute("height")));
+
+            graphic.beginFill(0xCCCCCC);
+            graphic.drawRect(   parseFloat(element.getAttribute("x")), parseFloat(element.getAttribute("y")), 
+                                bulletWidth(parseFloat(element.getAttribute("range_red")), range), parseFloat(element.getAttribute("height")));
+
+            // current val
+            graphic.beginFill(0x4682B4);
+            graphic.drawRect(   parseFloat(element.getAttribute("x")), parseFloat(element.getAttribute("y")), 
+                                parseFloat(element.getAttribute("width")), parseFloat(element.getAttribute("height")));
+            
+            // plan val
             graphic.beginFill(0xB0C4DE);
-            graphic.drawRect(  parseInt(element.getAttribute("x")), parseInt(element.getAttribute("y")), 
-                                parseInt(element.getAttribute("width")), parseInt(element.getAttribute("height")));
+            graphic.drawRect(   parseFloat(element.getAttribute("x")), 
+                                parseFloat(element.getAttribute("y")) + (parseFloat(element.getAttribute("height")) * 0.25), 
+                                bulletWidth(parseFloat(element.getAttribute("val_plan")), range), parseFloat(element.getAttribute("height")) * 0.5);
+
+            // last val
+            graphic.beginFill(0x000000);
+            graphic.drawRect(   bulletWidth(parseFloat(element.getAttribute("val_last")), range), 
+                                parseFloat(element.getAttribute("y")) + (parseFloat(element.getAttribute("height")) * 0.15), 
+                                2, parseFloat(element.getAttribute("height")) * 0.7);
+
             graphic.endFill();
 
             // make the graphic interactive..
@@ -114,7 +162,7 @@
 
             // set the mousedown and touchstart callback..
             graphic.mousedown = graphic.touchstart = function(data) {
-                alert(parseInt(element.getAttribute("value")));
+                alert(parseFloat(element.getAttribute("val_current")));
             };
 
             graphics[graphics.length] = graphic;
@@ -131,11 +179,12 @@
                 var graphic = graphics[i];
 
                 if (parseBoolean(child.getAttribute("animate"))) {
-                    graphic.clear();
-                    graphic.beginFill(0xB0C4DE);
+                    // graphic.clear();
+                    graphic.beginFill(0x4682B4);
 
-                    graphic.drawRect(  parseInt(child.getAttribute("x")), parseInt(child.getAttribute("y")), 
-                                parseInt(child.getAttribute("width")), parseInt(child.getAttribute("height")));
+                    graphic.drawRect(  parseFloat(child.getAttribute("x")), 
+                            parseFloat(child.getAttribute("y")) + (parseFloat(child.getAttribute("height")) * 0.25), 
+                            parseFloat(child.getAttribute("width")), parseFloat(child.getAttribute("height")) * 0.5);
 
                     graphic.endFill();
                 }
@@ -170,6 +219,26 @@
             return (str == "true");
         }
 
+        // Random values button . WIP
+        function randomize(d) {
+            if (!d.randomizer) d.randomizer = randomizer(d);
+            d.ranges = d.ranges.map(d.randomizer);
+            d.markers = d.markers.map(d.randomizer);
+            d.measures = d.measures.map(d.randomizer);
+            return d;
+        }
+
+        function randomizer(d) {
+            var k = d3.max(d.ranges) * .2;
+            return function(d) {
+                return Math.max(0, d + k * (Math.random() - .5));
+            };
+        }
+
+        function onRndButton() {
+            alert("rand");
+            bullet.datum(randomize).call(drawBullets); // TODO automatic transition
+        }
     </script>
 </body>
 </html>

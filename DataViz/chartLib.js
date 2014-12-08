@@ -101,14 +101,15 @@ ChartLib.Bullet = function (element) {
         steps = (steps < 5)? 5 : steps;
         var step = this.domain[1] / steps;
         for (var i = 0; i < steps; i++) {
-			this.beginFill(0x000000);
+			this.beginFill(0xCCCCCC);
         	this.drawRect( this.calc_width(step*i, this.range), this._y + this._height, 1, this._height * 0.2);
 
         	// only add text once
         	if (this.children.length < steps) { 
-				var text = new PIXI.Text((step*i).toFixed(1), {font: 0.45 * this._height + "px Arial", fill:"black"});
+				var text = new PIXI.Text((step*i).toFixed(1), {font: (0.45 * this._height).toFixed(0) + "px Podkova", fill:"black", stroke: "#FFFFFF", strokeThickness: 6});
 				text.position.x = this.calc_width(step*i, this.range);
 				text.position.y = this._y + this._height * 1.3;
+				// text.scale(0.5, 0.5);
 				this.addChild(text);
 			};
         }

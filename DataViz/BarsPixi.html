@@ -12,6 +12,7 @@
     <script src="d3.v3.min.js"></script>
     <script src="pixi.dev.js"></script>
     <script src="chartLib.js"></script>
+    <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script>
     
 </head>
 <body>
@@ -30,10 +31,14 @@
         // create an new instance of a pixi stage
         var stage = new PIXI.Stage(0xFFFFFF, true);
 
-        var w = 400,
-            h = 300;
+        var w = 300,
+            h = 400;
 
         var renderer = PIXI.autoDetectRenderer(w, h);
+
+        d3.select("body").append("custom:renderer")
+            .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
+
 
         // container element for bulletGraphics
         var graphics = new Array();

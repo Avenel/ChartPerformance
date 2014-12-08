@@ -39,6 +39,8 @@ namespace ChartPerformance.Pages
             Padding = new Thickness (10, 10, 10, 10);
 
             Content = browser;
+
+            BackgroundColor = Color.White;
         }
 
         private static Button Link(string name)

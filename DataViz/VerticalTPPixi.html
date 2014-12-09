@@ -1,0 +1,168 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>pixi.js barcharts example</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #FFFFFF;
+        }
+    </style>
+    
+    <script src="d3.v3.min.js"></script>
+    <script src="pixi.dev.js"></script>
+    <script src="chartLib.js"></script>
+    <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script>
+    
+</head>
+<body>
+    <canvas id="chart"></canvas>
+    <script>
+        // data
+        var bullets = 
+            [
+              {"title":"Revenue","subtitle":"US$, in thousands","ranges":[150,225,300],"measures":[220,270],"markers":[200]},
+              {"title":"Profit","subtitle":"%","ranges":[20,25,30],"measures":[21,23],"markers":[26]},
+              {"title":"Order Size","subtitle":"US$, average","ranges":[350,500,600],"measures":[100,320],"markers":[550]},
+              {"title":"New Customers","subtitle":"count","ranges":[1400,2000,2500],"measures":[1000,1650],"markers":[2100]},
+              {"title":"Satisfaction","subtitle":"out of 5","ranges":[3.5,4.25,5],"measures":[3.2,4.7],"markers":[4.4]}
+            ] 
+
+        // create an new instance of a pixi stage
+        var stage = new PIXI.Stage(0xFFFFFF, true);
+
+        // for retina displays its important to consider the devicePixelRatio...
+        var scale = window.devicePixelRatio;
+        var w = 250,
+            h = 300,
+            padding = 18;
+
+        var canvas = document.getElementById('chart');
+        var options = new function() { 
+            this.transparent = false;
+            this.view = canvas;
+            this.resolution = 2;
+        }
+        
+        var renderer = PIXI.autoDetectRecommendedRenderer(w*scale, h*scale, options);
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+
+        d3.select("body").append("custom:renderer")
+            .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
+
+
+        // container element for bulletGraphics
+        var graphics = new Array();
+
+        // indicates if animation should be active or not (one should not animate, if the viz is already static)
+        var global_animate = true
+
+        // add render view to DOM
+        document.body.appendChild(renderer.view);
+    
+        // Add our "custom" sketch element to the body.
+        var sketch = d3.select("body").append("cxustom:sketch")
+            .attr("width", w)
+            .attr("height", h);
+
+        // calculate yPosition of bullet
+        var yPos = d3.scale.ordinal()
+            .domain( d3.range( bullets.length ) )
+            .rangeRoundBands( [0, h - (2*padding)], 0.37 );
+
+        var xPos = d3.scale.ordinal()
+            .domain( d3.range( bullets.length ) )
+            .rangeRoundBands( [0, w - (2*padding)], 0.37 );
+
+        // append bullet objects to sketch
+        var bullet = sketch.selectAll("bullet").data(bullets);
+        bullet.enter()
+            .append( 'bullet' )
+            .attr({
+                title: function( d, i ) {
+                    return d.title;
+                },
+                title_width: 70,
+                x: function( d, i ) {
+                    return xPos(i) + (i-1)*10;
+                },
+                y: h - padding,
+                width: xPos.rangeBand(),
+                height: 0,
+                max_height: h - (2*padding),
+                scale: scale,
+                val_current: function( d, i ) {
+                    return d.measures[0];
+                },
+                val_last: function ( d, i ) {
+                    return d.markers[0];
+                },
+                val_plan: function ( d, i ) {
+                    return d.measures[1];
+                },
+                range_red: function ( d, i ) {
+                    return d.ranges[0];
+                },
+                range_yellow: function ( d, i ) {
+                    return d.ranges[1];
+                },
+                range_green: function ( d, i ) {
+                    return d.ranges[2];
+                },
+                animate: true
+            })
+            .call(addBullets);
+
+        bullet.transition()
+            .duration(1000)
+            .attr("height", function ( d, i ) {
+                return d.measures[0];
+            })
+            .each('end', pauseBulletUpdate);
+            
+        // insert bullets into pixi canvas
+        function addBullets() {
+            var root = d3.select("sketch")[0][0];
+            for (var child = root.firstChild; child; child = child.nextSibling) {
+                stage.addChild(new ChartLib.VerticalTargetGraph(child));
+            }    
+        };
+
+        function updateBullets () {
+            var root = d3.select("sketch")[0][0];
+            var i = 0;
+            for (var child = root.firstChild; child; child = child.nextSibling) {
+                if (i < stage.children.length) {
+                    var b = stage.children[i];
+                    if (b.animate) {
+                        b.update(child);
+                    }
+                }
+                i++;
+            }
+        }
+
+        function pauseBulletUpdate () {
+            for (var i = 0; i < stage.children.length; i++) {
+                stage.children[i].animate = false;
+            }
+        };
+
+        // run the render loop
+        requestAnimFrame(animate);
+
+        renderer.render(stage);
+
+        function animate() {
+            updateBullets();
+            renderer.render(stage);
+            requestAnimFrame(animate);
+        }
+
+        function parseBoolean(str) {
+            return (str == "true");
+        }
+    </script>
+</body>
+</html>

@@ -71,6 +71,10 @@
             .domain( d3.range( bullets.length ) )
             .rangeRoundBands( [0, h - (2*padding)], 0.37 );
 
+        var xPos = d3.scale.ordinal()
+            .domain( d3.range( bullets.length ) )
+            .rangeRoundBands( [0, w - (2*padding)], 0.37 );
+
         // append bullet objects to sketch
         var bullet = sketch.selectAll("bullet").data(bullets);
         bullet.enter()
@@ -123,7 +127,7 @@
         function addBullets() {
             var root = d3.select("sketch")[0][0];
             for (var child = root.firstChild; child; child = child.nextSibling) {
-                stage.addChild(new ChartLib.Bullet(child));
+                stage.addChild(new ChartLib.HorizontalTargetGraph(child));
             }    
         };
 

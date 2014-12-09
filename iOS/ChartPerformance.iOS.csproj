@@ -126,9 +126,6 @@
     <BundleResource Include="..\DataViz\map.js">
       <Link>Resources\map.js</Link>
     </BundleResource>
-    <BundleResource Include="..\DataViz\BarsPixi.html">
-      <Link>Resources\BarsPixi.html</Link>
-    </BundleResource>
     <BundleResource Include="..\DataViz\pixi.js">
       <Link>Resources\pixi.js</Link>
     </BundleResource>

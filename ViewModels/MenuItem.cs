@@ -32,7 +32,10 @@ namespace ChartPerformance.ViewModels
     public class RotatingGlobeWebGLMenuItem : MenuItem {
     }
 
-    public class BarsPixiMenuItem : MenuItem {
+    public class VerticalTGPixiMenuItem : MenuItem {
+    }
+
+    public class HorizontalTGPixiMenuItem : MenuItem {
     }
 
 }

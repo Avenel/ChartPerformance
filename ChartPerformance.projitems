@@ -49,11 +49,14 @@
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\rotatingglobewebgl.html">
       <LogicalName>ChartPerformance.RotatingGlobeWebGL.html</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\BarsPixi.html">
-      <LogicalName>ChartPerformance.BarsPixi.html</LogicalName>
-    </EmbeddedResource>
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\chartLib.js" />
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\pixi.dev.js" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\VerticalTPPixi.html">
+      <LogicalName>ChartPerformance.VerticalTGPixi.html</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\HorizontalTGPixi.html">
+      <LogicalName>ChartPerformance.HorizontalTGPixi.html</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)handleRessources.sh" />

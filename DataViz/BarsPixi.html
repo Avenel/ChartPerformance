@@ -34,8 +34,8 @@
         // for retina displays its important to consider the devicePixelRatio...
         var scale = window.devicePixelRatio;
         var w = 300,
-            h = 200,
-            padding = 15;
+            h = 250,
+            padding = 18;
 
         var canvas = document.getElementById('chart');
         var options = new function() { 
@@ -76,6 +76,10 @@
         bullet.enter()
             .append( 'bullet' )
             .attr({
+                title: function( d, i ) {
+                    return d.title;
+                },
+                title_width: 70,
                 x: padding,
                 y: function( d, i ) {
                  return yPos(i) + (i-1)*10;

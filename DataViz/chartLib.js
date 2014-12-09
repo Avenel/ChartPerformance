@@ -43,10 +43,29 @@ ChartLib.Bullet = function (element) {
 	    this._y = parseFloat(element.getAttribute("y")) * this._scale;
 	    this._height = parseFloat(element.getAttribute("height")) * this._scale;
 
+	    // Title
+    	this._title = element.getAttribute("title");
+
+    	// Title of bullet
+    	if (!this._titleNode) {
+    		this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
+			this._titleNode = new PIXI.Text(this._title, {font: (0.05 * this._height) + "em sans-serif", fill:"black", 
+															wordWrap: true, wordWrapWith: this._titleWidth, align:"right"});
+
+			// calculate textposition
+			this._titleNode.position.x = this._x + (this._titleWidth - this._titleNode.width);
+			this._titleNode.position.y = (this._y + (this._height/2)) - (this._titleNode.height / 2);
+
+			// calc new x pos for bullet graphics
+			this._bullet_x = this._x + this._titleWidth + 10;
+			this.removeChild(this._titleNode);
+			this.addChild(this._titleNode);
+		}
+
 	    // actual bullet width of current val (graphic attribute, does not correspond to the value)
 	    this._width = parseFloat(element.getAttribute("width"));
 
-	    this.range = [0, parseFloat(element.getAttribute("max_width")) * this._scale];
+	    this.range = [0, parseFloat(element.getAttribute("max_width")) * this._scale - this._titleWidth];
 
 	    // traffic light ranges [red, yellow, green]
 	    this.tl_range = [ parseFloat(element.getAttribute("range_green")),
@@ -68,7 +87,7 @@ ChartLib.Bullet = function (element) {
     	this.ticks = this._axisScale.ticks.apply(this._axisScale, _arguments);
 
 	    // set animate to true, because there is new data in town!
-	    this.animate = true;
+	    this.animate = true;	    
     };
 
 	// calculate the width of a given value (linear scaling)
@@ -84,27 +103,27 @@ ChartLib.Bullet = function (element) {
 
 		// "traffic light" - green
 		this.beginFill(0xEEEEEE);
-        this.drawRect( this._x, this._y, this.calc_width(this.tl_range[0]), this._height);
+        this.drawRect( this._bullet_x, this._y, this.calc_width(this.tl_range[0]), this._height);
 
         // "traffic light" - yellow
         this.beginFill(0xDDDDDD);
-        this.drawRect( this._x, this._y, this.calc_width(this.tl_range[1]), this._height);
+        this.drawRect( this._bullet_x, this._y, this.calc_width(this.tl_range[1]), this._height);
 
         // "traffic light" - red
         this.beginFill(0xCCCCCC);
-        this.drawRect( this._x, this._y, this.calc_width(this.tl_range[2]), this._height);
+        this.drawRect( this._bullet_x, this._y, this.calc_width(this.tl_range[2]), this._height);
 
         // plan val
         this.beginFill(0xB0C4DE);
-        this.drawRect( this._x, this._y + (this._height * 0.25), this.calc_width(this.measures[2], this.range), this._height * 0.5);
+        this.drawRect( this._bullet_x, this._y + (this._height * 0.25), this.calc_width(this.measures[2], this.range), this._height * 0.5);
 
         // current val
         this.beginFill(0x4682B4);
-		this.drawRect( this._x, this._y + (this._height * 0.25), this.calc_width(this._width, this.range), this._height * 0.5);
+		this.drawRect( this._bullet_x, this._y + (this._height * 0.25), this.calc_width(this._width, this.range), this._height * 0.5);
 
         // last val
         this.beginFill(0x000000);
-        this.drawRect( this.calc_width(this.measures[0], this.range), this._y + this._height * 0.15, 2, this._height * 0.7);
+        this.drawRect( this._bullet_x + this.calc_width(this.measures[0], this.range), this._y + this._height * 0.15, 2, this._height * 0.7);
 
 		this.endFill();
 
@@ -112,12 +131,12 @@ ChartLib.Bullet = function (element) {
         var steps = this.ticks.length;
         for (var i = 0; i < steps; i++) {
 			this.beginFill(0xCCCCCC);
-        	this.drawRect( this._x + this.calc_width(this.ticks[i], this.range) - 1, this._y + this._height, 2, this._height * 0.2);
+        	this.drawRect( this._bullet_x + this.calc_width(this.ticks[i], this.range) - 1, this._y + this._height, 2, this._height * 0.2);
 
-        	// only add text once
-        	if (this.children.length < steps) { 
+        	// only add text once (+1  'cause of title node)
+        	if (this.children.length < steps + 1) { 
 				var text = new PIXI.Text(this.ticks[i], {font: (0.05 * this._height) + "em sans-serif", fill:"black"});
-				text.position.x = Math.floor(this._x + this.calc_width(this.ticks[i], this.range) - (text.width / 2));
+				text.position.x = Math.floor(this._bullet_x + this.calc_width(this.ticks[i], this.range) - (text.width / 2));
 				text.position.y = Math.floor(this._y + this._height * 1.2);
 				this.addChild(text);
 			};

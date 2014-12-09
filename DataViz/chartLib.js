@@ -102,15 +102,15 @@ ChartLib.Bullet = function (element) {
 		this.clear();
 
 		// "traffic light" - green
-		this.beginFill(0xEEEEEE);
+		this.beginFill(0xEFEFEF);
         this.drawRect( this._bullet_x, this._y, this.calc_width(this.tl_range[0]), this._height);
 
         // "traffic light" - yellow
-        this.beginFill(0xDDDDDD);
+        this.beginFill(0xC3C3C3);
         this.drawRect( this._bullet_x, this._y, this.calc_width(this.tl_range[1]), this._height);
 
         // "traffic light" - red
-        this.beginFill(0xCCCCCC);
+        this.beginFill(0x999999);
         this.drawRect( this._bullet_x, this._y, this.calc_width(this.tl_range[2]), this._height);
 
         // plan val
@@ -118,11 +118,11 @@ ChartLib.Bullet = function (element) {
         this.drawRect( this._bullet_x + this.calc_width(this.measures[2], this.range), this._y + this._height * 0.15, 3, this._height * 0.7);
 
         // current val
-        this.beginFill(0x4682B4);
+        this.beginFill(0x000000);
 		this.drawRect( this._bullet_x, this._y + (this._height * 0.25), this.calc_width(this._width, this.range), this._height * 0.5);
 
         // last val
-        this.beginFill(0x333333);
+        this.beginFill(0x808080);
         this.drawCircle( this._bullet_x + this.calc_width(this.measures[0], this.range), this._y + (this._height/2), this._height * 0.3);
 
 		this.endFill();

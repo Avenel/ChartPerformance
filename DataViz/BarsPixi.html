@@ -16,7 +16,7 @@
     
 </head>
 <body>
-    <!-- <button onclick="onRndButton();">Update</button> -->
+    <canvas id="chart"></canvas>
     <script>
         // data
         var bullets = 
@@ -31,10 +31,22 @@
         // create an new instance of a pixi stage
         var stage = new PIXI.Stage(0xFFFFFF, true);
 
+        // for retina displays its important to consider the devicePixelRatio...
+        var scale = window.devicePixelRatio;
         var w = 300,
-            h = 400;
+            h = 200,
+            padding = 15;
 
-        var renderer = PIXI.autoDetectRenderer(w, h);
+        var canvas = document.getElementById('chart');
+        var options = new function() { 
+            this.transparent = false;
+            this.view = canvas;
+            this.resolution = 2;
+        }
+        
+        var renderer = PIXI.autoDetectRecommendedRenderer(w*scale, h*scale, options);
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
 
         d3.select("body").append("custom:renderer")
             .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
@@ -57,22 +69,23 @@
         // calculate yPosition of bullet
         var yPos = d3.scale.ordinal()
             .domain( d3.range( bullets.length ) )
-            .rangeRoundBands( [0, h], 0.5 );
+            .rangeRoundBands( [0, h - (2*padding)], 0.37 );
 
         // append bullet objects to sketch
         var bullet = sketch.selectAll("bullet").data(bullets);
         bullet.enter()
             .append( 'bullet' )
             .attr({
-                x: 0,
+                x: padding,
                 y: function( d, i ) {
-                 return  yPos(i);
+                 return yPos(i) + (i-1)*10;
                 },
                 width: function( d, i ) {
                     return 0;
                 },
                 height: yPos.rangeBand(),
-                max_width: w,
+                max_width: w - (2*padding),
+                scale: scale,
                 val_current: function( d, i ) {
                     return d.measures[0];
                 },
@@ -101,15 +114,6 @@
                 return d.measures[0];
             })
             .each('end', pauseBulletUpdate);
-
-        var xAxis = d3.svg.axis()
-            .scale( 
-                d3.scale.linear()
-                    .domain([0, 300])
-                    .range( [0, 300]) 
-            )
-            .orient( 'top' );
-    
             
         // insert bullets into pixi canvas
         function addBullets() {

@@ -106,6 +106,8 @@ d3.bullet = function() {
       // Compute the tick format.
       var format = tickFormat || x1.tickFormat(8);
 
+      console.log(format);
+
       // Update the tick groups.
       var tick = g.selectAll("g.tick")
           .data(x1.ticks(8), function(d) {

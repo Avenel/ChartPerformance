@@ -28,21 +28,25 @@ ChartLib.Bullet = function (element) {
 	// flag for updateAnimation
 	this.animate = true;
 
+
     this.init = function (element) {
     	// measures = [last, current, plan]
 		this.measures = [ parseFloat(element.getAttribute("val_last")), 
 	                     parseFloat(element.getAttribute("val_current")),
 	                     parseFloat(element.getAttribute("val_plan")) ];
 
-       	// have to use underscore as a prefix due to weired issues (perhaps value was overidden by another call....)
-	    this._x = parseFloat(element.getAttribute("x"));
-	    this._y = parseFloat(element.getAttribute("y"));
-	    this._height = parseFloat(element.getAttribute("height"));
+        // device pixel ratio stuff
+        this._scale = parseFloat(element.getAttribute("scale"));
 
-	    // actual bullet width of current val
+       	// have to use underscore as a prefix due to weired issues (perhaps value was overidden by another call....)
+	    this._x = parseFloat(element.getAttribute("x")) * this._scale;
+	    this._y = parseFloat(element.getAttribute("y")) * this._scale;
+	    this._height = parseFloat(element.getAttribute("height")) * this._scale;
+
+	    // actual bullet width of current val (graphic attribute, does not correspond to the value)
 	    this._width = parseFloat(element.getAttribute("width"));
 
-	    this.range = [0, parseFloat(element.getAttribute("max_width"))];
+	    this.range = [0, parseFloat(element.getAttribute("max_width")) * this._scale];
 
 	    // traffic light ranges [red, yellow, green]
 	    this.tl_range = [ parseFloat(element.getAttribute("range_green")),
@@ -54,6 +58,15 @@ ChartLib.Bullet = function (element) {
 	    measurez.sort(d3.descending);
 	    this.domain = [0, Math.max(this.tl_range[0], measurez[2])];
 
+	    // calc axis
+    	this._axisScale = d3.scale.linear()
+	            	.domain(this.domain)
+                	.range( this.range);
+
+        var _arguments = [8];
+    	this.tickFormat = this._axisScale.tickFormat.apply(this.scale, _arguments);
+    	this.ticks = this._axisScale.ticks.apply(this._axisScale, _arguments);
+
 	    // set animate to true, because there is new data in town!
 	    this.animate = true;
     };
@@ -63,7 +76,7 @@ ChartLib.Bullet = function (element) {
         var width = d3.scale.linear()
             .domain(this.domain)
             .range( this.range);
-        return width(val);
+        return Math.floor(width(val));
     };
 
 	this.draw = function () {
@@ -96,20 +109,16 @@ ChartLib.Bullet = function (element) {
 		this.endFill();
 
         // axis
-        var rel = (this.range[1] / this.domain[1])
-        var steps = (rel > 8)? 8 : rel;
-        steps = (steps < 5)? 5 : steps;
-        var step = this.domain[1] / steps;
+        var steps = this.ticks.length;
         for (var i = 0; i < steps; i++) {
 			this.beginFill(0xCCCCCC);
-        	this.drawRect( this.calc_width(step*i, this.range), this._y + this._height, 1, this._height * 0.2);
+        	this.drawRect( this._x + this.calc_width(this.ticks[i], this.range) - 1, this._y + this._height, 2, this._height * 0.2);
 
         	// only add text once
         	if (this.children.length < steps) { 
-				var text = new PIXI.Text((step*i).toFixed(1), {font: (0.45 * this._height).toFixed(0) + "px Podkova", fill:"black", stroke: "#FFFFFF", strokeThickness: 6});
-				text.position.x = this.calc_width(step*i, this.range);
-				text.position.y = this._y + this._height * 1.3;
-				// text.scale(0.5, 0.5);
+				var text = new PIXI.Text(this.ticks[i], {font: (0.05 * this._height) + "em sans-serif", fill:"black"});
+				text.position.x = Math.floor(this._x + this.calc_width(this.ticks[i], this.range) - (text.width / 2));
+				text.position.y = Math.floor(this._y + this._height * 1.2);
 				this.addChild(text);
 			};
         }
@@ -124,6 +133,7 @@ ChartLib.Bullet = function (element) {
 
 	// draw chart
 	this.init(element);
+
 	this.draw();
 }
 

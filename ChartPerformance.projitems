@@ -51,11 +51,11 @@
     </EmbeddedResource>
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\chartLib.js" />
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\pixi.dev.js" />
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\VerticalTPPixi.html">
-      <LogicalName>ChartPerformance.VerticalTGPixi.html</LogicalName>
-    </EmbeddedResource>
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\HorizontalTGPixi.html">
       <LogicalName>ChartPerformance.HorizontalTGPixi.html</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\VerticalTGPixi.html">
+      <LogicalName>ChartPerformance.VerticalTGPixi.html</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

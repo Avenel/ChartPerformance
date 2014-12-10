@@ -57,6 +57,9 @@
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\VerticalTGPixi.html">
       <LogicalName>ChartPerformance.VerticalTGPixi.html</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\BarChartPixi.html">
+      <LogicalName>ChartPerformance.BarChartPixi.html</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)handleRessources.sh" />

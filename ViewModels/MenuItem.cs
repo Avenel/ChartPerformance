@@ -38,6 +38,9 @@ namespace ChartPerformance.ViewModels
     public class HorizontalTGPixiMenuItem : MenuItem {
     }
 
+    public class BarChartPixiMenuItem : MenuItem {
+    }
+
 }
 
 

@@ -40,7 +40,7 @@ ChartLib.HorizontalTargetGraph = function (element) {
        	// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
 	    this._x = parseFloat(element.getAttribute("x")) * this._scale;
 	    this._y = parseFloat(element.getAttribute("y")) * this._scale;
-	    this._height = parseFloat(element.getAttribute("height")) * (2/3) * this._scale;
+	    this._height = parseFloat(element.getAttribute("height")) * this._scale;
 	    // Title
     	this._title = element.getAttribute("title");
 
@@ -63,7 +63,7 @@ ChartLib.HorizontalTargetGraph = function (element) {
 	    this._width = parseFloat(element.getAttribute("width"));
 
 	    // max width of bar: max graphical width - width of valuetext
-	    this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 1*this._pxs;
+	    this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
 
 	    this.range = [0, this.max_width - this._titleWidth];
 
@@ -206,7 +206,7 @@ ChartLib.VerticalTargetGraph = function (element) {
 
 	    // actual TargetGraph height of current val (graphic attribute, does not correspond to the value)
 	    this._height = parseFloat(element.getAttribute("height"));
-	    this._width = parseFloat(element.getAttribute("width")) * this._scale * (2/3);
+	    this._width = parseFloat(element.getAttribute("width")) * this._scale;
 
 	    // Title
     	this._title = element.getAttribute("title");
@@ -333,3 +333,115 @@ ChartLib.VerticalTargetGraph = function (element) {
 // Set prototype object to the accordinate Pixi.js Graphics object 
 ChartLib.VerticalTargetGraph.prototype = PIXI.Graphics.prototype;
 ChartLib.VerticalTargetGraph.prototype.constructor = ChartLib.VerticalTargetGraph;
+
+/**
+ * Vertical TargetGraph, introduced by Kohlhammer et al.
+ */
+ChartLib.BarChart = function (element) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+	this.type = "verticalTargetGraph";
+
+	// make the graphic interactive..
+    this.interactive = true;
+	
+    // bind element 
+	this.element = element;
+
+	// flag for updateAnimation
+	this.animate = true;
+
+	this.init = function (element) {
+		// device pixel ratio stuff
+        this._scale = parseFloat(element.getAttribute("scale"));
+        this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
+
+       	// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
+	    this._x = parseFloat(element.getAttribute("x")) * this._scale;
+	    this._y = parseFloat(element.getAttribute("y")) * this._scale;
+
+	    // actual TargetGraph height of current val (graphic attribute, does not correspond to the value)
+	    this._height = parseFloat(element.getAttribute("height")) * this._scale;
+	    this._width = parseFloat(element.getAttribute("width"));
+
+	    // Title
+    	this._title = element.getAttribute("title");
+
+    	// Title of TargetGraph
+    	if (!this._titleNode) {
+    		this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
+			this._titleNode = new PIXI.Text(this._title, {font: (this._pxs) + "px arial", fill:"black", 
+															wordWrap: true, wordWrapWith: this._titleWidth, align:"right"});
+
+			// calculate textposition
+			this._titleNode.position.x = this._x + (this._titleWidth - this._titleNode.width);
+			this._titleNode.position.y = (this._y + (this._height/2)) - (this._titleNode.height / 2);
+
+			// calc new x pos for TargetGraph graphics
+			this._targetGraph_x = this._x + this._titleWidth + 0.3*pxs;
+			this.addChild(this._titleNode);
+		}
+
+	    // actual TargetGraph width of current val (graphic attribute, does not correspond to the value)
+	    this._width = parseFloat(element.getAttribute("width"));
+
+	    // max width of bar: max graphical width - width of valuetext
+	    this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
+
+	    this.range = [0, this.max_width - this._titleWidth];
+
+	    // calculate domain
+	    this.domain_min = parseFloat(element.getAttribute("domain_min"));
+	    this.domain_max = parseFloat(element.getAttribute("domain_max"));
+	    this.domain = [this.domain_min, this.domain_max];
+
+	    // calc axis
+    	this._axisScale = d3.scale.linear()
+	            	.domain(this.domain)
+                	.range( this.range);
+
+        // value of current value
+        this._value = parseFloat(element.getAttribute("value"));
+		if (!this._valueNode) {
+			this._valueNode = new PIXI.Text(this._value, {font: (this._pxs ) + "px arial", fill:"black"});
+			this._valueNode.position.x = this._targetGraph_x + this.calc_width(this.domain_max) + 0.3*this._pxs;
+			this._valueNode.position.y = (this._y + (this._height/2)) - (this._valueNode.height / 2);
+			this.addChild(this._valueNode);
+		}
+
+	    // set animate to true, because there is new data in town!
+	    this.animate = true;
+	}
+
+	// calculate the width of a given value (linear scaling)
+	this.calc_width = function (val) {
+        var width = d3.scale.linear()
+            .domain(this.domain)
+            .range( this.range);
+        return Math.floor(width(val));
+    };
+
+	this.draw = function () {
+		this.clear();
+
+		// current val
+        this.beginFill(0x000000);
+		this.drawRect( this._targetGraph_x, this._y, this.calc_width(this._width, this.range), this._height);
+		this.endFill();
+	}	
+
+	this.update = function (element) {
+		this.init(element);
+		this.draw();
+	}
+
+	this.init(element);
+	this.draw();
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object 
+ChartLib.BarChart.prototype = PIXI.Graphics.prototype;
+ChartLib.BarChart.prototype.constructor = ChartLib.BarChart;
+
+
+

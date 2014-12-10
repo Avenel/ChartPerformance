@@ -50,6 +50,7 @@ namespace ChartPerformance.Pages
             MenuItems.Add(new BarsMenuItem());
             MenuItems.Add(new HorizontalTGPixiMenuItem());
             MenuItems.Add(new VerticalTGPixiMenuItem());
+            MenuItems.Add(new BarChartPixiMenuItem());
             MenuItems.Add(new ShowcaseMenuItem());
             MenuItems.Add(new RotatingGlobeSVGMenuItem());
             MenuItems.Add(new RotatingGlobeCanvasMenuItem());

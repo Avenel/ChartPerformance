@@ -1,158 +1,154 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>pixi.js barcharts example</title>
-    <style>
-        body {
-            margin: 0;
-            background-color: #FFFFFF;
-        }
-    </style>
-    
-    <script src="d3.v3.min.js"></script>
-    <script src="pixi.dev.js"></script>
-    <script src="chartLib.js"></script>
-    <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script>
-    
+  <title>pixi.js barcharts example</title>
+  <style>
+  body {
+    margin: 0;
+    background-color: #FFFFFF;
+  }
+  </style>
+
+  <script src="d3.v3.min.js"></script>
+  <script src="pixi.dev.js"></script>
+  <script src="chartLib.js"></script>
+  <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script>
+
 </head>
 <body>
-    <canvas id="chart"></canvas>
-    <script>
-        // data
-        var bullets = 
-            [
-              {"title":"Germany", "val":220},
-              {"title":"France",  "val":180},
-              {"title":"Spain",  "val":40},
-              {"title":"Italy",  "val":80},
-              {"title":"Netherlands",  "val":150}
-            ] 
+  <canvas id="chart"></canvas>
+  <script>
+  // data
+  var bullets =
+  [
+  {"title":"Germany", "val":220},
+  {"title":"France",  "val":180},
+  {"title":"Spain",  "val":40},
+  {"title":"Italy",  "val":80},
+  {"title":"Netherlands",  "val":150}
+  ]
 
-        // create an new instance of a pixi stage
-        var stage = new PIXI.Stage(0xFFFFFF, true);
+  // create an new instance of a pixi stage
+  var stage = new PIXI.Stage(0xFFFFFF, true);
 
-        // for retina displays its important to consider the devicePixelRatio...
-        var scale = window.devicePixelRatio;
-        var // 1 fontsize in em for ibcs standard measure
-            fs = 1.0, // 1fs / [em]
-            // 1em = 16px (default browser value)
-            pxs = 16,
-            category_w = 1.8,
-            w = Math.floor(20*pxs*fs), // 1.8fs = recommended category width
-            h = Math.floor(bullets.length*pxs*fs*category_w), 
-            padding = Math.floor(1*pxs*fs);
+  // for retina displays its important to consider the devicePixelRatio...
+  var scale = window.devicePixelRatio;
+  var // 1 fontsize in em for ibcs standard measure
+  fs = 1.0, // 1fs / [em]
+  // 1em = 16px (default browser value)
+  pxs = 16,
+  category_w = 1.8,
+  w = Math.floor(20*pxs*fs), // 1.8fs = recommended category width
+  h = Math.floor(bullets.length*pxs*fs*category_w),
+  padding = Math.floor(1*pxs*fs);
 
-        var canvas = document.getElementById('chart');
-        var options = new function() { 
-            this.transparent = false;
-            this.view = canvas;
+  var canvas = document.getElementById('chart');
+  var options = new function() {
+    this.transparent = false;
+    this.view = canvas;
+  }
+
+  var renderer = PIXI.autoDetectRecommendedRenderer(w*scale, h*scale, options);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+
+  d3.select("body").append("custom:renderer")
+  .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
+
+
+  // container element for bulletGraphics
+  var graphics = new Array();
+
+  // indicates if animation should be active or not (one should not animate, if the viz is already static)
+  var global_animate = true
+
+  // add render view to DOM
+  document.body.appendChild(renderer.view);
+
+  // Add our "custom" sketch element to the body.
+  var sketch = d3.select("body").append("cxustom:sketch")
+  .attr("width", w)
+  .attr("height", h);
+
+  // calculate yPosition of bullet
+  var yPos = d3.scale.ordinal()
+  .domain( d3.range( bullets.length ) )
+  .rangeRoundBands( [0, h - (2*padding)], 1/3); // IBCS: category width = 1.8fs -> Space = 1/3 * 1.8fs
+
+  // append bar objects to sketch
+  var bar = sketch.selectAll("bar").data(bullets);
+  bar.enter()
+  .append( 'bar' )
+  .attr({
+    title: function( d, i ) {
+      return d.title;
+    },
+    title_width: 5*pxs,
+    x: padding,
+    y: function( d, i ) {
+      return yPos(i);
+    },
+    width: function( d, i ) {
+      return 0;
+    },
+    pxs: pxs * fs,
+    height: yPos.rangeBand(),
+    max_width: w - (2*padding),
+    scale: scale,
+    domain_min: 0,
+    domain_max: 300,
+    value: function( d, i ) {
+      return d.val;
+    },
+    animate: true
+  })
+  .call(addBars);
+
+  bar.transition()
+  .duration(1000)
+  .attr("width", function ( d, i ) {
+    return d.val;
+  })
+  .each('end', pauseBarUpdate);
+
+  // insert bullets into pixi canvas
+  function addBars() {
+    var root = d3.select("sketch")[0][0];
+    for (var child = root.firstChild; child; child = child.nextSibling) {
+      stage.addChild(new ChartLib.BarChart(child));
+    }
+  };
+
+  function updateBars () {
+    var root = d3.select("sketch")[0][0];
+    var i = 0;
+    for (var child = root.firstChild; child; child = child.nextSibling) {
+      if (i < stage.children.length) {
+        var b = stage.children[i];
+        if (b.animate) {
+          b.update(child);
         }
-        
-        var renderer = PIXI.autoDetectRecommendedRenderer(w*scale, h*scale, options);
-        canvas.style.width = w + 'px';
-        canvas.style.height = h + 'px';
+      }
+      i++;
+    }
+  }
 
-        d3.select("body").append("custom:renderer")
-            .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
+  function pauseBarUpdate () {
+    for (var i = 0; i < stage.children.length; i++) {
+      stage.children[i].animate = false;
+    }
+  };
 
+  // run the render loop
+  requestAnimFrame(animate);
 
-        // container element for bulletGraphics
-        var graphics = new Array();
+  renderer.render(stage);
 
-        // indicates if animation should be active or not (one should not animate, if the viz is already static)
-        var global_animate = true
-
-        // add render view to DOM
-        document.body.appendChild(renderer.view);
-    
-        // Add our "custom" sketch element to the body.
-        var sketch = d3.select("body").append("cxustom:sketch")
-            .attr("width", w)
-            .attr("height", h);
-
-        // calculate yPosition of bullet
-        var yPos = d3.scale.ordinal()
-            .domain( d3.range( bullets.length ) )
-            .rangeRoundBands( [0, h - (2*padding)], 1/3); // IBCS: category width = 1.8fs -> Space = 1/3 * 1.8fs
-
-        // append bar objects to sketch
-        var bar = sketch.selectAll("bar").data(bullets);
-        bar.enter()
-            .append( 'bar' )
-            .attr({
-                title: function( d, i ) {
-                    return d.title;
-                },
-                title_width: 5*pxs,
-                x: padding,
-                y: function( d, i ) {
-                 return yPos(i);
-                 },
-                width: function( d, i ) {
-                    return 0;
-                },
-                pxs: pxs * fs,
-                height: yPos.rangeBand(),
-                max_width: w - (2*padding),
-                scale: scale,
-                domain_min: 0,
-                domain_max: 300,
-                value: function( d, i ) {
-                    return d.val;
-                },
-                animate: true
-            })
-            .call(addBars);
-
-        bar.transition()
-            .duration(1000)
-            .attr("width", function ( d, i ) {
-                return d.val;
-            })
-            .each('end', pauseBarUpdate);
-            
-        // insert bullets into pixi canvas
-        function addBars() {
-            var root = d3.select("sketch")[0][0];
-            for (var child = root.firstChild; child; child = child.nextSibling) {
-                stage.addChild(new ChartLib.BarChart(child));
-            }    
-        };
-
-        function updateBars () {
-            var root = d3.select("sketch")[0][0];
-            var i = 0;
-            for (var child = root.firstChild; child; child = child.nextSibling) {
-                if (i < stage.children.length) {
-                    var b = stage.children[i];
-                    if (b.animate) {
-                        b.update(child);
-                    }
-                }
-                i++;
-            }
-        }
-
-        function pauseBarUpdate () {
-            for (var i = 0; i < stage.children.length; i++) {
-                stage.children[i].animate = false;
-            }
-        };
-
-        // run the render loop
-        requestAnimFrame(animate);
-
-        renderer.render(stage);
-
-        function animate() {
-            updateBars();
-            renderer.render(stage);
-            requestAnimFrame(animate);
-        }
-
-        function parseBoolean(str) {
-            return (str == "true");
-        }
-    </script>
+  function animate() {
+    updateBars();
+    renderer.render(stage);
+    requestAnimFrame(animate);
+  }
+  </script>
 </body>
 </html>

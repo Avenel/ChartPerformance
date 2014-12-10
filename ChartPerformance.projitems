@@ -27,28 +27,7 @@
     <Folder Include="$(MSBuildThisFileDirectory)DataViz\" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\showcase.html">
-      <LogicalName>ChartPerformance.Showcase.html</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\bars.html">
-      <LogicalName>ChartPerformance.Bars.html</LogicalName>
-    </EmbeddedResource>
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\d3.v3.min.js" />
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\bullet.js" />
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\bullets.json" />
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\column.png" />
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\stocks.csv" />
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\rotatingglobesvg.html">
-      <LogicalName>ChartPerformance.RotatingGlobeSVG.html</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\rotatingglobecanvas.html">
-      <LogicalName>ChartPerformance.RotatingGlobeCanvas.html</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\world-110m.json" />
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\compr_world.json" />
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\rotatingglobewebgl.html">
-      <LogicalName>ChartPerformance.RotatingGlobeWebGL.html</LogicalName>
-    </EmbeddedResource>
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\chartLib.js" />
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\pixi.dev.js" />
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\HorizontalTGPixi.html">
@@ -60,10 +39,12 @@
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\BarChartPixi.html">
       <LogicalName>ChartPerformance.BarChartPixi.html</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\ColumnChartPixi.html">
+      <LogicalName>ChartPerformance.ColumnChartPixi.html</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)handleRessources.sh" />
-    <None Include="$(MSBuildThisFileDirectory)DataViz\map.js" />
     <None Include="$(MSBuildThisFileDirectory)DataViz\pixi.js" />
   </ItemGroup>
 </Project>

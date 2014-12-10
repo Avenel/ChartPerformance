@@ -47,14 +47,10 @@ namespace ChartPerformance.Pages
             layout.Children.Add(menuLabel);
 
             // Menu item list
-            MenuItems.Add(new BarsMenuItem());
             MenuItems.Add(new HorizontalTGPixiMenuItem());
             MenuItems.Add(new VerticalTGPixiMenuItem());
             MenuItems.Add(new BarChartPixiMenuItem());
-            MenuItems.Add(new ShowcaseMenuItem());
-            MenuItems.Add(new RotatingGlobeSVGMenuItem());
-            MenuItems.Add(new RotatingGlobeCanvasMenuItem());
-            MenuItems.Add(new RotatingGlobeWebGLMenuItem());
+            MenuItems.Add(new ColumnChartPixiMenuItem());
 
 
             Menu = new ListView {

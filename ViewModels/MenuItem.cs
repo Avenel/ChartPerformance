@@ -17,21 +17,6 @@ namespace ChartPerformance.ViewModels
         // public ImageSource IconSource { get { return ImageSource.FromFile(Icon); } }
     }
 
-    public class BarsMenuItem : MenuItem {
-    }
-
-    public class ShowcaseMenuItem : MenuItem {
-    }
-
-    public class RotatingGlobeSVGMenuItem : MenuItem {
-    }
-
-    public class RotatingGlobeCanvasMenuItem : MenuItem {
-    }
-
-    public class RotatingGlobeWebGLMenuItem : MenuItem {
-    }
-
     public class VerticalTGPixiMenuItem : MenuItem {
     }
 
@@ -39,6 +24,9 @@ namespace ChartPerformance.ViewModels
     }
 
     public class BarChartPixiMenuItem : MenuItem {
+    }
+
+    public class ColumnChartPixiMenuItem : MenuItem {
     }
 
 }

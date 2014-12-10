@@ -13,7 +13,7 @@ namespace ChartPerformance
         {
             MDPage = new MasterDetailPage {
                 Master = new MenuPage(MDPage),
-                Detail = new NavPage(CreateContentPage("Bars")),
+                Detail = new NavPage(CreateContentPage("HorizontalTGPixi")),
             };
             MDPage.IsPresentedChanged += (sender, e) => Console.WriteLine(DateTime.Now + ": " + MDPage.IsPresented);
             return MDPage;

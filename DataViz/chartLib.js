@@ -47,7 +47,7 @@ ChartLib.HorizontalTargetGraph = function (element) {
     	// Title of TargetGraph
     	if (!this._titleNode) {
     		this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: (this._pxs) + "px sans-serif", fill:"black", 
+			this._titleNode = new PIXI.Text(this._title, {font: (this._pxs) + "px arial", fill:"black", 
 															wordWrap: true, wordWrapWith: this._titleWidth, align:"right"});
 
 			// calculate textposition
@@ -91,7 +91,7 @@ ChartLib.HorizontalTargetGraph = function (element) {
 
     	// value of current value
 		if (!this._valueNode) {
-			this._valueNode = new PIXI.Text(this.measures[1], {font: (this._pxs) + "px sans-serif", fill:"black"});
+			this._valueNode = new PIXI.Text(this.measures[1], {font: (this._pxs ) + "px arial", fill:"black"});
 			this._valueNode.position.x = this._targetGraph_x + this.calc_width(this.domain_max) + 0.3*this._pxs;
 			this._valueNode.position.y = (this._y + (this._height/2)) - (this._valueNode.height / 2);
 			this.addChild(this._valueNode);
@@ -217,7 +217,7 @@ ChartLib.VerticalTargetGraph = function (element) {
 		// Title of TargetGraph
     	if (!this._titleNode) {
     		this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: this._pxs + "px sans-serif", fill:"black", 
+			this._titleNode = new PIXI.Text(this._title, {font: this._pxs + "px arial", fill:"black", 
 															wordWrap: true, wordWrapWith: this._titleWidth, align:"center"});
 
 			// calculate textposition
@@ -254,7 +254,7 @@ ChartLib.VerticalTargetGraph = function (element) {
 
     	// value of current value
 		if (!this._valueNode) {
-			this._valueNode = new PIXI.Text(this.measures[1], {font: (this._pxs) + "px sans-serif", fill:"black"});
+			this._valueNode = new PIXI.Text(this.measures[1], {font: (this._pxs) + "px arial", fill:"black"});
 			this._valueNode.position.y = this._targetGraph_y - this.calc_height(this.domain_max) - 1.3*this._pxs;
 			this._valueNode.position.x = (this._x + (this._width/2)) - (this._valueNode.width / 2);
 			this.addChild(this._valueNode);

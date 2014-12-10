@@ -35,19 +35,19 @@ ChartLib.HorizontalTargetGraph = function (element) {
 
         // device pixel ratio stuff
         this._scale = parseFloat(element.getAttribute("scale"));
+        this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
 
        	// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
 	    this._x = parseFloat(element.getAttribute("x")) * this._scale;
 	    this._y = parseFloat(element.getAttribute("y")) * this._scale;
-	    this._height = parseFloat(element.getAttribute("height")) * this._scale;
-
+	    this._height = parseFloat(element.getAttribute("height")) * (2/3) * this._scale;
 	    // Title
     	this._title = element.getAttribute("title");
 
     	// Title of TargetGraph
     	if (!this._titleNode) {
     		this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: (0.05 * this._height) + "em sans-serif", fill:"black", 
+			this._titleNode = new PIXI.Text(this._title, {font: (this._pxs) + "px sans-serif", fill:"black", 
 															wordWrap: true, wordWrapWith: this._titleWidth, align:"right"});
 
 			// calculate textposition
@@ -55,14 +55,17 @@ ChartLib.HorizontalTargetGraph = function (element) {
 			this._titleNode.position.y = (this._y + (this._height/2)) - (this._titleNode.height / 2);
 
 			// calc new x pos for TargetGraph graphics
-			this._targetGraph_x = this._x + this._titleWidth + 10;
+			this._targetGraph_x = this._x + this._titleWidth + 0.3*pxs;
 			this.addChild(this._titleNode);
 		}
 
 	    // actual TargetGraph width of current val (graphic attribute, does not correspond to the value)
 	    this._width = parseFloat(element.getAttribute("width"));
 
-	    this.range = [0, parseFloat(element.getAttribute("max_width")) * this._scale - this._titleWidth];
+	    // max width of bar: max graphical width - width of valuetext
+	    this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 1*this._pxs;
+
+	    this.range = [0, this.max_width - this._titleWidth];
 
 	    // traffic light ranges [red, yellow, green]
 	    this.tl_range = [ parseFloat(element.getAttribute("range_green")),
@@ -72,7 +75,10 @@ ChartLib.HorizontalTargetGraph = function (element) {
 	    // calc domain
 	    var measurez = [this.measures[0], this.measures[1], this.measures[2]];
 	    measurez.sort(d3.descending);
-	    this.domain = [0, Math.max(this.tl_range[0], measurez[2])];
+
+	    this.domain_min = parseFloat(element.getAttribute("domain_min"));
+	    this.domain_max = parseFloat(element.getAttribute("domain_max"));
+	    this.domain = [this.domain_min, this.domain_max];
 
 	    // calc axis
     	this._axisScale = d3.scale.linear()
@@ -82,6 +88,14 @@ ChartLib.HorizontalTargetGraph = function (element) {
         var _arguments = [8];
     	this.tickFormat = this._axisScale.tickFormat.apply(this.scale, _arguments);
     	this.ticks = this._axisScale.ticks.apply(this._axisScale, _arguments);
+
+    	// value of current value
+		if (!this._valueNode) {
+			this._valueNode = new PIXI.Text(this.measures[1], {font: (this._pxs) + "px sans-serif", fill:"black"});
+			this._valueNode.position.x = this._targetGraph_x + this.calc_width(this.domain_max) + 0.3*this._pxs;
+			this._valueNode.position.y = (this._y + (this._height/2)) - (this._valueNode.height / 2);
+			this.addChild(this._valueNode);
+		}
 
 	    // set animate to true, because there is new data in town!
 	    this.animate = true;	    
@@ -100,7 +114,7 @@ ChartLib.HorizontalTargetGraph = function (element) {
 
 		// "traffic light" - green
 		this.beginFill(0xEFEFEF);
-        this.drawRect( this._targetGraph_x, this._y, this.calc_width(this.tl_range[0]), this._height);
+        this.drawRect( this._targetGraph_x, this._y, this.calc_width(this.domain_max), this._height);
 
         // "traffic light" - yellow
         this.beginFill(0xC3C3C3);
@@ -124,20 +138,20 @@ ChartLib.HorizontalTargetGraph = function (element) {
 
 		this.endFill();
 
-        // axis
-        var steps = this.ticks.length;
+        // axis -- disabled due to hichert notation. 
+        /*var steps = this.ticks.length;
         for (var i = 0; i < steps; i++) {
 			this.beginFill(0xCCCCCC);
         	this.drawRect( this._targetGraph_x + this.calc_width(this.ticks[i], this.range) - 1, this._y + this._height, 2, this._height * 0.2);
 
         	// only add text once (+1  'cause of title node)
         	if (this.children.length < steps + 1) { 
-				var text = new PIXI.Text(this.ticks[i], {font: (0.05 * this._height) + "em sans-serif", fill:"black"});
+				var text = new PIXI.Text(this.ticks[i], {font: this._pxs + "px sans-serif", fill:"black"});
 				text.position.x = Math.floor(this._targetGraph_x + this.calc_width(this.ticks[i], this.range) - (text.width / 2));
 				text.position.y = Math.floor(this._y + this._height * 1.2);
 				this.addChild(text);
 			};
-        }
+        }*/
 	};
 
 	// update values and redraw
@@ -184,6 +198,7 @@ ChartLib.VerticalTargetGraph = function (element) {
 
         // device pixel ratio stuff
         this._scale = parseFloat(element.getAttribute("scale"));
+        this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
 
        	// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
 	    this._x = parseFloat(element.getAttribute("x")) * this._scale;
@@ -191,28 +206,29 @@ ChartLib.VerticalTargetGraph = function (element) {
 
 	    // actual TargetGraph height of current val (graphic attribute, does not correspond to the value)
 	    this._height = parseFloat(element.getAttribute("height"));
-	    this._width = parseFloat(element.getAttribute("width")) * this._scale;
+	    this._width = parseFloat(element.getAttribute("width")) * this._scale * (2/3);
 
 	    // Title
     	this._title = element.getAttribute("title");
 
 		// calc new x pos for TargetGraph graphics
-		this._targetGraph_y = this._y - 10;
+		this._targetGraph_y = this._y - (this._width * 0.3);
 
 		// Title of TargetGraph
-    	/*if (!this._titleNode) {
+    	if (!this._titleNode) {
     		this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: (0.05 * this._height) + "em sans-serif", fill:"black", 
-															wordWrap: true, wordWrapWith: this._titleWidth, align:"right"});
+			this._titleNode = new PIXI.Text(this._title, {font: this._pxs + "px sans-serif", fill:"black", 
+															wordWrap: true, wordWrapWith: this._titleWidth, align:"center"});
 
 			// calculate textposition
-			this._titleNode.position.x = this._x + (this._titleWidth);
-			this._titleNode.position.y = (this._y + (this._height/2)) ;
+			this._titleNode.position.x = this._x + this._width/2 - (this._titleNode.width / 2);
+			this._titleNode.position.y = this._y ;
 
 			this.addChild(this._titleNode);
-		}*/
+		}
 
-	    this.range = [0, parseFloat(element.getAttribute("max_height")) * this._scale];
+		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1.3*this._pxs;
+	    this.range = [0, this.max_height];
 
 	    // traffic light ranges [red, yellow, green]
 	    this.tl_range = [ parseFloat(element.getAttribute("range_green")),
@@ -222,7 +238,10 @@ ChartLib.VerticalTargetGraph = function (element) {
 	    // calc domain
 	    var measurez = [this.measures[0], this.measures[1], this.measures[2]];
 	    measurez.sort(d3.descending);
-	    this.domain = [0, Math.max(this.tl_range[0], measurez[2])];
+
+	    this.domain_min = parseFloat(element.getAttribute("domain_min"));
+	    this.domain_max = parseFloat(element.getAttribute("domain_max"));
+	    this.domain = [this.domain_min, this.domain_max];
 
 	    // calc axis
     	this._axisScale = d3.scale.linear()
@@ -232,6 +251,15 @@ ChartLib.VerticalTargetGraph = function (element) {
         var _arguments = [8];
     	this.tickFormat = this._axisScale.tickFormat.apply(this.scale, _arguments);
     	this.ticks = this._axisScale.ticks.apply(this._axisScale, _arguments);
+
+    	// value of current value
+		if (!this._valueNode) {
+			this._valueNode = new PIXI.Text(this.measures[1], {font: (this._pxs) + "px sans-serif", fill:"black"});
+			this._valueNode.position.y = this._targetGraph_y - this.calc_height(this.domain_max) - 1.3*this._pxs;
+			this._valueNode.position.x = (this._x + (this._width/2)) - (this._valueNode.width / 2);
+			this.addChild(this._valueNode);
+			console.log(this._valueNode);
+		}
 
 	    // set animate to true, because there is new data in town!
 	    this.animate = true;	    
@@ -250,7 +278,7 @@ ChartLib.VerticalTargetGraph = function (element) {
 
 		// "traffic light" - green
 		this.beginFill(0xEFEFEF);
-        this.drawRect( this._x, this._targetGraph_y, this._width, -this.calc_height(this.tl_range[0]));
+        this.drawRect( this._x, this._targetGraph_y, this._width, -this.calc_height(this.domain_max) );
 
         // "traffic light" - yellow
         this.beginFill(0xC3C3C3);
@@ -275,19 +303,19 @@ ChartLib.VerticalTargetGraph = function (element) {
 		this.endFill();
 
 		// axis
-        var steps = this.ticks.length;
+        /*var steps = this.ticks.length;
         for (var i = 0; i < steps; i++) {
 			this.beginFill(0xCCCCCC);
         	this.drawRect( this._x + this._width, this._targetGraph_y - this.calc_height(this.ticks[i], this.range), this._width * 0.2, 2);
 
         	// only add text once (+1  'cause of title node)
-        	/*if (this.children.length < steps + 1) { 
-				var text = new PIXI.Text(this.ticks[i], {font: (0.05 * this._height) + "em sans-serif", fill:"black"});
-				//text.position.y = Math.floor(this._targetGraph_y + this.calc_height(this.ticks[i], this.range) - (text.height / 2));
-				//text.position.x = Math.floor(this._x + this._width * 1.2);
-				// this.addChild(text);
-			};*/
-        }
+        	if (this.children.length < steps + 1) { 
+				var text = new PIXI.Text(this.ticks[i], {font: (0.025 * this._width) + "em sans-serif", fill:"black"});
+				text.position.y = Math.floor(this._targetGraph_y - this.calc_height(this.ticks[i], this.range) - (text.height / 2));
+				text.position.x = Math.floor(this._x + this._width * 1.2);
+				this.addChild(text);
+			};
+        }*/
 	};
 
 	// update values and redraw

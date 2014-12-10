@@ -21,11 +21,10 @@
         // data
         var bullets = 
             [
-              {"title":"Revenue","subtitle":"US$, in thousands","ranges":[150,225,300],"measures":[220,270],"markers":[200]},
-              {"title":"Profit","subtitle":"%","ranges":[20,25,30],"measures":[21,23],"markers":[26]},
-              {"title":"Order Size","subtitle":"US$, average","ranges":[350,500,600],"measures":[100,320],"markers":[550]},
-              {"title":"New Customers","subtitle":"count","ranges":[1400,2000,2500],"measures":[1000,1650],"markers":[2100]},
-              {"title":"Satisfaction","subtitle":"out of 5","ranges":[3.5,4.25,5],"measures":[3.2,4.7],"markers":[4.4]}
+              {"title":"Q1", "ranges":[150,225,300], "measures":[220,270], "markers":[200]},
+              {"title":"Q2", "ranges":[200,250,300], "measures":[210,230], "markers":[260]},
+              {"title":"Q3", "ranges":[350,500,600], "measures":[400,520], "markers":[550]},
+              {"title":"Q4", "ranges":[140,200,250], "measures":[100,165], "markers":[210]}
             ] 
 
         // create an new instance of a pixi stage
@@ -33,15 +32,20 @@
 
         // for retina displays its important to consider the devicePixelRatio...
         var scale = window.devicePixelRatio;
-        var w = 250,
+        var w = 300,
             h = 300,
-            padding = 18;
+            padding = 20,
+            // fontsize in em for ibcs standard measure
+            fs = 0.5,
+            // 1em = 16px (default browser value)
+            pxs = (fs * 16),
+            w = w*fs,
+            h = h*fs;
 
         var canvas = document.getElementById('chart');
         var options = new function() { 
             this.transparent = false;
             this.view = canvas;
-            this.resolution = 2;
         }
         
         var renderer = PIXI.autoDetectRecommendedRenderer(w*scale, h*scale, options);
@@ -73,7 +77,7 @@
 
         var xPos = d3.scale.ordinal()
             .domain( d3.range( bullets.length ) )
-            .rangeRoundBands( [0, w - (2*padding)], 0.37 );
+            .rangeRoundBands( [0, w - (2*padding)], 0.3*fs );
 
         // append bullet objects to sketch
         var bullet = sketch.selectAll("bullet").data(bullets);
@@ -83,14 +87,15 @@
                 title: function( d, i ) {
                     return d.title;
                 },
-                title_width: 70,
+                title_width: 15*fs,
                 x: function( d, i ) {
-                    return xPos(i) + (i-1)*10;
+                    return xPos(i) + (i-1)*0.15*(pxs) + padding;
                 },
-                y: h - padding,
+                y: h - 2*padding,
                 width: xPos.rangeBand(),
                 height: 0,
-                max_height: h - (2*padding),
+                max_height: h - (3*padding),
+                pxs: pxs,
                 scale: scale,
                 val_current: function( d, i ) {
                     return d.measures[0];
@@ -110,6 +115,8 @@
                 range_green: function ( d, i ) {
                     return d.ranges[2];
                 },
+                domain_min: 0,
+                domain_max: 600,
                 animate: true
             })
             .call(addBullets);

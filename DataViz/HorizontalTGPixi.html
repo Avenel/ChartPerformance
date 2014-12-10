@@ -21,11 +21,11 @@
         // data
         var bullets = 
             [
-              {"title":"Revenue","subtitle":"US$, in thousands","ranges":[150,225,300],"measures":[220,270],"markers":[200]},
-              {"title":"Profit","subtitle":"%","ranges":[20,25,30],"measures":[21,23],"markers":[26]},
-              {"title":"Order Size","subtitle":"US$, average","ranges":[350,500,600],"measures":[100,320],"markers":[550]},
-              {"title":"New Customers","subtitle":"count","ranges":[1400,2000,2500],"measures":[1000,1650],"markers":[2100]},
-              {"title":"Satisfaction","subtitle":"out of 5","ranges":[3.5,4.25,5],"measures":[3.2,4.7],"markers":[4.4]}
+              {"title":"Germany", "ranges":[150,225,300], "measures":[220,270], "markers":[200]},
+              {"title":"France", "ranges":[200,250,300], "measures":[210,230], "markers":[260]},
+              {"title":"Spain", "ranges":[150,200,260], "measures":[200, 220], "markers":[250]},
+              {"title":"Italy", "ranges":[140,200,250], "measures":[100,165], "markers":[210]},
+              {"title":"Netherlands", "ranges":[40,70,100], "measures":[80, 85], "markers":[95]}
             ] 
 
         // create an new instance of a pixi stage
@@ -34,14 +34,20 @@
         // for retina displays its important to consider the devicePixelRatio...
         var scale = window.devicePixelRatio;
         var w = 300,
-            h = 250,
-            padding = 18;
+            h = 300,
+            padding = 18,
+
+            // fontsize in em for ibcs standard measure
+            fs = 0.5;
+            // 1em = 16px (default browser value)
+            pxs = (fs * 16),
+            w = w*fs,
+            h = h*fs;
 
         var canvas = document.getElementById('chart');
         var options = new function() { 
             this.transparent = false;
             this.view = canvas;
-            this.resolution = 2;
         }
         
         var renderer = PIXI.autoDetectRecommendedRenderer(w*scale, h*scale, options);
@@ -69,7 +75,7 @@
         // calculate yPosition of bullet
         var yPos = d3.scale.ordinal()
             .domain( d3.range( bullets.length ) )
-            .rangeRoundBands( [0, h - (2*padding)], 0.37 );
+            .rangeRoundBands( [0, h - (2*padding)], 0.2 );
 
         var xPos = d3.scale.ordinal()
             .domain( d3.range( bullets.length ) )
@@ -83,17 +89,20 @@
                 title: function( d, i ) {
                     return d.title;
                 },
-                title_width: 70,
+                title_width: 5*pxs,
                 x: padding,
                 y: function( d, i ) {
-                 return yPos(i) + (i-1)*10;
-                },
+                 return yPos(i) + (i-1)*0.15*pxs;
+                 },
                 width: function( d, i ) {
                     return 0;
                 },
+                pxs: pxs,
                 height: yPos.rangeBand(),
                 max_width: w - (2*padding),
                 scale: scale,
+                domain_min: 0,
+                domain_max: 300,
                 val_current: function( d, i ) {
                     return d.measures[0];
                 },

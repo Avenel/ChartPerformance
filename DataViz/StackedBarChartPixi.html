@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <title>pixi.js barcharts example</title>
+  <title>Stacked Bar Chart</title>
   <style>
   body {
     margin: 0;
@@ -19,12 +19,13 @@
   <canvas id="chart"></canvas>
   <script>
   // data
-  var bullets =
+  var data =
   [
-  {"title":"Q1", "val":220},
-  {"title":"Q2",  "val":180},
-  {"title":"Q3",  "val":40},
-  {"title":"Q4",  "val":80}
+  {"title":"Germany", "values": [100, 20, 120, 65]},
+  {"title":"France", "values": [10, 25, 85, 55]},
+  {"title":"Spain", "values": [200, 30, 100, 35]},
+  {"title":"Italy", "values": [120, 50, 90, 12]},
+  {"title":"Netherlands", "values": [150, 30, 70, 18]}
   ]
 
   // create an new instance of a pixi stage
@@ -36,9 +37,9 @@
   fs = 1, // 1fs / [em]
   // 1em = 16px (default browser value)
   pxs = 16,
-  category_w = 3.8,
+  category_w = 1.8,
   w = Math.floor(20*pxs*fs),
-  h = Math.floor(bullets.length*pxs*fs*category_w),
+  h = Math.floor(data.length*pxs*fs*category_w),
   padding = Math.floor(1*pxs*fs);
 
   var canvas = document.getElementById('chart');
@@ -70,53 +71,56 @@
   .attr("height", h);
 
   // calculate yPosition of bullet
-  var xPos = d3.scale.ordinal()
-  .domain( d3.range( bullets.length ) )
-  .rangeRoundBands( [0, w - (2*padding)], 1/3);
+  var yPos = d3.scale.ordinal()
+  .domain( d3.range( data.length ) )
+  .rangeRoundBands( [0, h - (2*padding)], 1/3);
 
   // append bar objects to sketch
-  var column = sketch.selectAll("bar").data(bullets);
-  column.enter()
-  .append( 'bar' )
+  var bar = sketch.selectAll("stackedBar").data(data);
+  bar.enter()
+  .append( 'stackedBar' )
   .attr({
     title: function( d, i ) {
       return d.title;
     },
     title_width: 5*pxs,
-    x: function( d, i ) {
-      return xPos(i);
+    x: padding,
+    y: function( d, i ) {
+      return yPos(i);
     },
-    y: h - padding,
-    width: xPos.rangeBand(),
+    width: 0,
     pxs: pxs * fs,
-    height: 0,
-    max_height: h - (2*padding),
+    height: yPos.rangeBand(),
+    max_width: w - (2*padding),
     scale: scale,
     domain_min: 0,
-    domain_max: 300,
-    value: function( d, i ) {
-      return d.val;
+    domain_max: 400,
+    values: function( d, i ) {
+      return d.values;
     },
     animate: true
   })
-  .call(addColumns);
+  .call(addStackedBars);
 
-  column.transition()
+  bar.transition()
   .duration(1000)
-  .attr("height", function ( d, i ) {
-    return d.val;
+  .attr("width", function ( d, i ) {
+    // sum of values
+    return d.values.reduce(function(previousValue, currentValue, index, array) {
+      return previousValue + currentValue;
+    });;
   })
-  .each('end', pauseColumnUpdate);
+  .each('end', pauseStackedBarUpdate);
 
-  // insert bullets into pixi canvas
-  function addColumns() {
+  // insert columns into pixi canvas
+  function addStackedBars() {
     var root = d3.select("sketch")[0][0];
     for (var child = root.firstChild; child; child = child.nextSibling) {
-      stage.addChild(new ChartLib.ColumnChart(child));
+      stage.addChild(new ChartLib.StackedBarChart(child));
     }
   };
 
-  function updateColumns () {
+  function updateStackedBars () {
     var root = d3.select("sketch")[0][0];
     var i = 0;
     for (var child = root.firstChild; child; child = child.nextSibling) {
@@ -130,7 +134,7 @@
     }
   }
 
-  function pauseColumnUpdate () {
+  function pauseStackedBarUpdate () {
     for (var i = 0; i < stage.children.length; i++) {
       stage.children[i].animate = false;
     }
@@ -142,7 +146,7 @@
   renderer.render(stage);
 
   function animate() {
-    updateColumns();
+    updateStackedBars();
     renderer.render(stage);
     requestAnimFrame(animate);
   }

@@ -29,6 +29,9 @@ namespace ChartPerformance.ViewModels
     public class ColumnChartPixiMenuItem : MenuItem {
     }
 
+    public class StackedColumnChartPixiMenuItem : MenuItem {
+    }
+
 }
 
 

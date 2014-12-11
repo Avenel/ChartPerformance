@@ -45,6 +45,12 @@
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\StackedColumnChartPixi.html">
       <LogicalName>ChartPerformance.StackedColumnChartPixi.html</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\GroupedColumnChartPixi.html">
+      <LogicalName>ChartPerformance.GroupedColumnChartPixi.html</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\StackedBarChartPixi.html">
+      <LogicalName>ChartPerformance.StackedBarChartPixi.html</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)handleRessources.sh" />

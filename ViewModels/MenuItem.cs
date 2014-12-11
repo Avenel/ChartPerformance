@@ -32,6 +32,12 @@ namespace ChartPerformance.ViewModels
     public class StackedColumnChartPixiMenuItem : MenuItem {
     }
 
+    public class StackedBarChartPixiMenuItem : MenuItem {
+    }
+
+    public class GroupedColumnChartPixiMenuItem : MenuItem {
+    }
+
 }
 
 

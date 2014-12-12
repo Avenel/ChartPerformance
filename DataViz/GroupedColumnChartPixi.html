@@ -12,7 +12,7 @@
   <script src="d3.v3.min.js"></script>
   <script src="pixi.dev.js"></script>
   <script src="chartLib.js"></script>
-  <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script>
+  <!-- <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script> -->
 
 </head>
 <body>
@@ -33,7 +33,7 @@
   // for retina displays its important to consider the devicePixelRatio...
   var scale = window.devicePixelRatio;
   var // 1 fontsize in em for ibcs standard measure
-  fs = 0.5, // 1fs / [em]
+  fs = 1.0, // 1fs / [em]
   // 1em = 16px (default browser value)
   pxs = 16,
   category_w = 2.3 * data[0].values.length,

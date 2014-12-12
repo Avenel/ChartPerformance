@@ -104,6 +104,9 @@ ChartLib.BasicHorizontalChart = function (element) {
 		// call super init
 		this.initDefault(element);
 
+		// scale height
+		this._height = this._height * this._scale;
+
 		// Title
 		if (!this._titleNode) {
 			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
@@ -118,6 +121,20 @@ ChartLib.BasicHorizontalChart = function (element) {
 			this._targetGraph_x = this._x + this._titleWidth + 0.3*pxs;
 			this.addChild(this._titleNode);
 		}
+
+		// max width of bar: max graphical width - width of valuetext
+		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
+
+		// calc axis
+		this.range = [0, this.max_width - this._titleWidth];
+		this._axisScale = d3.scale.linear()
+		.domain(this.domain)
+		.range( this.range);
+
+		// axis ticks
+		var _arguments = [8];
+		this.tickFormat = this._axisScale.tickFormat.apply(this._scale, _arguments);
+		this.ticks = this._axisScale.ticks.apply(this._axisScale, _arguments)
 	}
 }
 
@@ -141,6 +158,9 @@ ChartLib.BasicVerticalChart = function (element) {
 		// calc new x pos for TargetGraph graphics
 		this._targetGraph_y = this._y - (this._pxs * 0.3);
 
+		// scale width
+		this._width = this._width * this._scale;
+
 		// Title of TargetGraph
 		if (!this._titleNode) {
 			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
@@ -153,6 +173,20 @@ ChartLib.BasicVerticalChart = function (element) {
 
 			this.addChild(this._titleNode);
 		}
+
+		// max width of bar: max graphical width - width of valuetext
+		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1*this._pxs;
+
+		// calc axis
+		this.range = [0, this.max_height];
+		this._axisScale = d3.scale.linear()
+		.domain(this.domain)
+		.range( this.range);
+
+		// axis ticks
+		var _arguments = [8];
+		this.tickFormat = this._axisScale.tickFormat.apply(this.scale, _arguments);
+		this.ticks = this._axisScale.ticks.apply(this._axisScale, _arguments);
 	}
 }
 
@@ -177,31 +211,10 @@ ChartLib.HorizontalTargetGraph = function (element) {
 		parseFloat(element.getAttribute("val_current")),
 		parseFloat(element.getAttribute("val_plan")) ];
 
-		// max width of bar: max graphical width - width of valuetext
-		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
-
-		// scale height
-		this._height = this._height * this._scale;
-
-		this.range = [0, this.max_width - this._titleWidth];
-
 		// traffic light ranges [red, yellow, green]
 		this.tl_range = [ parseFloat(element.getAttribute("range_green")),
 		parseFloat(element.getAttribute("range_yellow")),
 		parseFloat(element.getAttribute("range_red")) ]
-
-		// calc domain
-		var measurez = [this.measures[0], this.measures[1], this.measures[2]];
-		measurez.sort(d3.descending);
-
-		// calc axis
-		this._axisScale = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-
-		var _arguments = [8];
-		this.tickFormat = this._axisScale.tickFormat.apply(this.scale, _arguments);
-		this.ticks = this._axisScale.ticks.apply(this._axisScale, _arguments);
 
 		// value of current value
 		if (!this._valueNode) {
@@ -268,26 +281,10 @@ ChartLib.VerticalTargetGraph = function (element) {
 		parseFloat(element.getAttribute("val_current")),
 		parseFloat(element.getAttribute("val_plan")) ];
 
-		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1.3*this._pxs;
-		this.range = [0, this.max_height];
-
 		// traffic light ranges [red, yellow, green]
 		this.tl_range = [ parseFloat(element.getAttribute("range_green")),
 		parseFloat(element.getAttribute("range_yellow")),
 		parseFloat(element.getAttribute("range_red")) ]
-
-		// calc domain
-		var measurez = [this.measures[0], this.measures[1], this.measures[2]];
-		measurez.sort(d3.descending);
-
-		// calc axis
-		this._axisScale = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-
-		var _arguments = [8];
-		this.tickFormat = this._axisScale.tickFormat.apply(this.scale, _arguments);
-		this.ticks = this._axisScale.ticks.apply(this._axisScale, _arguments);
 
 		// value of current value
 		if (!this._valueNode) {
@@ -349,16 +346,6 @@ ChartLib.BarChart = function (element) {
 		// call super init
 		this.initHorizontalChart(element);
 
-		// max width of bar: max graphical width - width of valuetext
-		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
-
-		this.range = [0, this.max_width - this._titleWidth];
-
-		// calc axis
-		this._axisScale = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-
 		// value of current value
 		this._value = parseFloat(element.getAttribute("value"));
 		if (!this._valueNode) {
@@ -400,16 +387,6 @@ ChartLib.ColumnChart = function (element) {
 		// call super init
 		this.initVerticalChart(element);
 
-		// max width of bar: max graphical width - width of valuetext
-		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1*this._pxs;
-
-		this.range = [0, this.max_height];
-
-		// calc axis
-		this._axisScale = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-
 		// value of current value
 		this._value = parseFloat(element.getAttribute("value"));
 		if (!this._valueNode) {
@@ -450,19 +427,6 @@ ChartLib.StackedColumnChart = function (element) {
 	this.init = function (element) {
 		// call super init
 		this.initVerticalChart(element);
-
-		// max width of bar: max graphical width - width of valuetext
-		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1*this._pxs;
-
-		this.range = [0, this.max_height];
-
-		// calc axis
-		this._axisScale = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-
-		// calc new x pos for TargetGraph graphics
-		this._targetGraph_y = this._y - (this._width * 0.3);
 
 		// values
 		this._values = element.getAttribute("values").split(",");
@@ -523,16 +487,6 @@ ChartLib.StackedBarChart = function (element) {
 		// call super init
 		this.initHorizontalChart(element);
 
-		// max width of bar: max graphical width - width of valuetext
-		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
-
-		this.range = [0, this.max_width - this._titleWidth];
-
-		// calc axis
-		this._axisScale = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-
 		// values
 		this._values = element.getAttribute("values").split(",");
 		if (!this._valueNodes) {
@@ -590,16 +544,6 @@ ChartLib.GroupedColumnChart = function (element) {
 	this.init = function (element) {
 		// call super init
 		this.initVerticalChart(element);
-
-		// max width of bar: max graphical width - width of valuetext
-		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1*this._pxs;
-
-		this.range = [0, this.max_height];
-
-		// calc axis
-		this._axisScale = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
 
 		// values
 		this._values = element.getAttribute("values").split(",");
@@ -659,31 +603,6 @@ ChartLib.GroupedBarChart = function (element) {
 	this.init = function (element) {
 		// call super init
 		this.initHorizontalChart(element);
-
-		// Title of TargetGraph
-		if (!this._titleNode) {
-			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: (this._pxs) + "px arial", fill:"black",
-			wordWrap: true, wordWrapWith: this._titleWidth, align:"right"});
-
-			// calculate textposition
-			this._titleNode.position.x = this._x + (this._titleWidth - this._titleNode.width);
-			this._titleNode.position.y = (this._y + (this._height/2)) - (this._titleNode.height / 2);
-
-			// calc new x pos for Graph graphics
-			this._targetGraph_x = this._x + this._titleWidth + 0.3*pxs;
-			this.addChild(this._titleNode);
-		}
-
-		// max width of bar: max graphical width - width of valuetext
-		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
-
-		this.range = [0, this.max_width - this._titleWidth];
-
-		// calc axis
-		this._axisScale = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
 
 		// values
 		this._values = element.getAttribute("values").split(",");

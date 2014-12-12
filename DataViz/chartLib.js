@@ -91,24 +91,20 @@ ChartLib.BasicChart.prototype.update = function (element) {
 * draw()
 */
 
+
 /**
-* Horizontal TargetGraph, introduced by Kohlhammer et al.
+* Basic Horizontal "class" - inherits BasicChart
+* Axis is vertical, but shapes grow horizontal
 */
-ChartLib.HorizontalTargetGraph = function (element) {
-
+ChartLib.BasicHorizontalChart = function (element) {
 	ChartLib.BasicChart.apply(this);
-	this.type = "horizontalTargetGraph";
+	this.type = "basicHorizontalChart";
 
-	this.init = function (element) {
+	this.initHorizontalChart = function (element) {
 		// call super init
 		this.initDefault(element);
 
-		// measures = [last, current, plan]
-		this.measures = [ parseFloat(element.getAttribute("val_last")),
-		parseFloat(element.getAttribute("val_current")),
-		parseFloat(element.getAttribute("val_plan")) ];
-
-		// Title of TargetGraph
+		// Title
 		if (!this._titleNode) {
 			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
 			this._titleNode = new PIXI.Text(this._title, {font: (this._pxs) + "px arial", fill:"black",
@@ -122,6 +118,64 @@ ChartLib.HorizontalTargetGraph = function (element) {
 			this._targetGraph_x = this._x + this._titleWidth + 0.3*pxs;
 			this.addChild(this._titleNode);
 		}
+	}
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.BasicHorizontalChart.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.BasicHorizontalChart.prototype.constructor = ChartLib.BasicHorizontalChart;
+
+
+/**
+* Basis Vertical "class" - inherits BasicChart
+* Axis is horizontal, but shapes grow vertical
+*/
+ChartLib.BasicVerticalChart = function (element) {
+	ChartLib.BasicChart.apply(this);
+	this.type = "basicVerticalChart";
+
+	this.initVerticalChart = function (element) {
+		// call super init
+		this.initDefault(element);
+
+		// calc new x pos for TargetGraph graphics
+		this._targetGraph_y = this._y - (this._pxs * 0.3);
+
+		// Title of TargetGraph
+		if (!this._titleNode) {
+			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
+			this._titleNode = new PIXI.Text(this._title, {font: this._pxs + "px arial", fill:"black",
+			wordWrap: true, wordWrapWith: this._titleWidth, align:"center"});
+
+			// calculate textposition
+			this._titleNode.position.x = this._x + this._width/2 - (this._titleNode.width / 2);
+			this._titleNode.position.y = this._y ;
+
+			this.addChild(this._titleNode);
+		}
+	}
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.BasicVerticalChart.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.BasicVerticalChart.prototype.constructor = ChartLib.BasicVerticalChart;
+
+/**
+* Horizontal TargetGraph, introduced by Kohlhammer et al.
+*/
+ChartLib.HorizontalTargetGraph = function (element) {
+
+	ChartLib.BasicHorizontalChart.apply(this);
+	this.type = "horizontalTargetGraph";
+
+	this.init = function (element) {
+		// call super init
+		this.initHorizontalChart(element);
+
+		// measures = [last, current, plan]
+		this.measures = [ parseFloat(element.getAttribute("val_last")),
+		parseFloat(element.getAttribute("val_current")),
+		parseFloat(element.getAttribute("val_plan")) ];
 
 		// max width of bar: max graphical width - width of valuetext
 		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
@@ -193,7 +247,7 @@ ChartLib.HorizontalTargetGraph = function (element) {
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.HorizontalTargetGraph.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.HorizontalTargetGraph.prototype = Object.create( ChartLib.BasicHorizontalChart.prototype );
 ChartLib.HorizontalTargetGraph.prototype.constructor = ChartLib.HorizontalTargetGraph;
 
 
@@ -202,33 +256,17 @@ ChartLib.HorizontalTargetGraph.prototype.constructor = ChartLib.HorizontalTarget
 */
 ChartLib.VerticalTargetGraph = function (element) {
 
-	ChartLib.BasicChart.apply(this);
+	ChartLib.BasicVerticalChart.apply(this);
 	this.type = "verticalTargetGraph";
 
 	this.init = function (element) {
 		// call super init
-		this.initDefault(element);
+		this.initVerticalChart(element);
 
 		// measures = [last, current, plan]
 		this.measures = [ parseFloat(element.getAttribute("val_last")),
 		parseFloat(element.getAttribute("val_current")),
 		parseFloat(element.getAttribute("val_plan")) ];
-
-		// calc new x pos for TargetGraph graphics
-		this._targetGraph_y = this._y - (this._pxs * 0.3);
-
-		// Title of TargetGraph
-		if (!this._titleNode) {
-			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: this._pxs + "px arial", fill:"black",
-			wordWrap: true, wordWrapWith: this._titleWidth, align:"center"});
-
-			// calculate textposition
-			this._titleNode.position.x = this._x + this._width/2 - (this._titleNode.width / 2);
-			this._titleNode.position.y = this._y ;
-
-			this.addChild(this._titleNode);
-		}
 
 		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1.3*this._pxs;
 		this.range = [0, this.max_height];
@@ -296,7 +334,7 @@ ChartLib.VerticalTargetGraph = function (element) {
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.VerticalTargetGraph.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.VerticalTargetGraph.prototype = Object.create( ChartLib.BasicVerticalChart.prototype );
 ChartLib.VerticalTargetGraph.prototype.constructor = ChartLib.VerticalTargetGraph;
 
 /**
@@ -304,27 +342,12 @@ ChartLib.VerticalTargetGraph.prototype.constructor = ChartLib.VerticalTargetGrap
 */
 ChartLib.BarChart = function (element) {
 
-	ChartLib.BasicChart.apply(this);
+	ChartLib.BasicHorizontalChart.apply(this);
 	this.type = "barChart";
 
 	this.init = function (element) {
 		// call super init
-		this.initDefault(element);
-
-		// Title of TargetGraph
-		if (!this._titleNode) {
-			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: (this._pxs) + "px arial", fill:"black",
-			wordWrap: true, wordWrapWith: this._titleWidth, align:"right"});
-
-			// calculate textposition
-			this._titleNode.position.x = this._x + (this._titleWidth - this._titleNode.width);
-			this._titleNode.position.y = (this._y + (this._height/2)) - (this._titleNode.height / 2);
-
-			// calc new x pos for TargetGraph graphics
-			this._targetGraph_x = this._x + this._titleWidth + 0.3*this._pxs;
-			this.addChild(this._titleNode);
-		}
+		this.initHorizontalChart(element);
 
 		// max width of bar: max graphical width - width of valuetext
 		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
@@ -362,7 +385,7 @@ ChartLib.BarChart = function (element) {
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.BarChart.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.BarChart.prototype = Object.create( ChartLib.BasicHorizontalChart.prototype );
 ChartLib.BarChart.prototype.constructor = ChartLib.BarChart;
 
 /**
@@ -370,28 +393,12 @@ ChartLib.BarChart.prototype.constructor = ChartLib.BarChart;
 */
 ChartLib.ColumnChart = function (element) {
 
-	ChartLib.BasicChart.apply(this);
+	ChartLib.BasicVerticalChart.apply(this);
 	this.type = "columnChart";
 
 	this.init = function (element) {
 		// call super init
-		this.initDefault(element);
-
-		// calc new x pos for TargetGraph graphics
-		this._targetGraph_y = this._y - (this._pxs * 0.3);
-
-		// Title of TargetGraph
-		if (!this._titleNode) {
-			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: this._pxs + "px arial", fill:"black",
-			wordWrap: true, wordWrapWith: this._titleWidth, align:"center"});
-
-			// calculate textposition
-			this._titleNode.position.x = this._x + this._width/2 - (this._titleNode.width / 2);
-			this._titleNode.position.y = this._y ;
-
-			this.addChild(this._titleNode);
-		}
+		this.initVerticalChart(element);
 
 		// max width of bar: max graphical width - width of valuetext
 		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1*this._pxs;
@@ -429,7 +436,7 @@ ChartLib.ColumnChart = function (element) {
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.ColumnChart.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.ColumnChart.prototype = Object.create( ChartLib.BasicVerticalChart.prototype );
 ChartLib.ColumnChart.prototype.constructor = ChartLib.ColumnChart;
 
 /**
@@ -437,28 +444,12 @@ ChartLib.ColumnChart.prototype.constructor = ChartLib.ColumnChart;
 */
 ChartLib.StackedColumnChart = function (element) {
 
-	ChartLib.BasicChart.apply(this);
+	ChartLib.BasicVerticalChart.apply(this);
 	this.type = "stackedColumnChart";
 
 	this.init = function (element) {
 		// call super init
-		this.initDefault(element);
-
-		// calc new x pos for TargetGraph graphics
-		this._targetGraph_y = this._y - (this._pxs * 0.3);
-
-		// Title of TargetGraph
-		if (!this._titleNode) {
-			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: this._pxs + "px arial", fill:"black",
-			wordWrap: true, wordWrapWith: this._titleWidth, align:"center"});
-
-			// calculate textposition
-			this._titleNode.position.x = this._x + this._width/2 - (this._titleNode.width / 2);
-			this._titleNode.position.y = this._y ;
-
-			this.addChild(this._titleNode);
-		}
+		this.initVerticalChart(element);
 
 		// max width of bar: max graphical width - width of valuetext
 		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1*this._pxs;
@@ -517,7 +508,7 @@ ChartLib.StackedColumnChart = function (element) {
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.StackedColumnChart.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.StackedColumnChart.prototype = Object.create( ChartLib.BasicVerticalChart.prototype );
 ChartLib.StackedColumnChart.prototype.constructor = ChartLib.StackedColumnChart;
 
 /**
@@ -525,27 +516,12 @@ ChartLib.StackedColumnChart.prototype.constructor = ChartLib.StackedColumnChart;
 */
 ChartLib.StackedBarChart = function (element) {
 
-	ChartLib.BasicChart.apply(this);
+	ChartLib.BasicHorizontalChart.apply(this);
 	this.type = "stackedBarChart";
 
 	this.init = function (element) {
 		// call super init
-		this.initDefault(element);
-
-		// Title of TargetGraph
-		if (!this._titleNode) {
-			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: (this._pxs) + "px arial", fill:"black",
-			wordWrap: true, wordWrapWith: this._titleWidth, align:"right"});
-
-			// calculate textposition
-			this._titleNode.position.x = this._x + (this._titleWidth - this._titleNode.width);
-			this._titleNode.position.y = (this._y + (this._height/2)) - (this._titleNode.height / 2);
-
-			// calc new x pos for TargetGraph graphics
-			this._targetGraph_x = this._x + this._titleWidth + 0.3*pxs;
-			this.addChild(this._titleNode);
-		}
+		this.initHorizontalChart(element);
 
 		// max width of bar: max graphical width - width of valuetext
 		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
@@ -600,7 +576,7 @@ ChartLib.StackedBarChart = function (element) {
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.StackedBarChart.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.StackedBarChart.prototype = Object.create( ChartLib.BasicHorizontalChart.prototype );
 ChartLib.StackedBarChart.prototype.constructor = ChartLib.StackedBarChart;
 
 /**
@@ -608,28 +584,12 @@ ChartLib.StackedBarChart.prototype.constructor = ChartLib.StackedBarChart;
 */
 ChartLib.GroupedColumnChart = function (element) {
 
-	ChartLib.BasicChart.apply(this);
+	ChartLib.BasicVerticalChart.apply(this);
 	this.type = "groupedColumnChart";
 
 	this.init = function (element) {
 		// call super init
-		this.initDefault(element);
-
-		// calc new x pos for TargetGraph graphics
-		this._targetGraph_y = this._y - (this._pxs * 0.3);
-
-		// Title of TargetGraph
-		if (!this._titleNode) {
-			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: this._pxs + "px arial", fill:"black",
-			wordWrap: true, wordWrapWith: this._titleWidth, align:"center"});
-
-			// calculate textposition
-			this._titleNode.position.x = this._x + this._width/2 - (this._titleNode.width / 2);
-			this._titleNode.position.y = this._y ;
-
-			this.addChild(this._titleNode);
-		}
+		this.initVerticalChart(element);
 
 		// max width of bar: max graphical width - width of valuetext
 		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1*this._pxs;
@@ -685,7 +645,7 @@ ChartLib.GroupedColumnChart = function (element) {
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.GroupedColumnChart.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.GroupedColumnChart.prototype = Object.create( ChartLib.BasicVerticalChart.prototype );
 ChartLib.GroupedColumnChart.prototype.constructor = ChartLib.GroupedColumnChart;
 
 /**
@@ -693,12 +653,12 @@ ChartLib.GroupedColumnChart.prototype.constructor = ChartLib.GroupedColumnChart;
 */
 ChartLib.GroupedBarChart = function (element) {
 
-	ChartLib.BasicChart.apply(this);
-	this.type = "horizontalTargetGraph";
+	ChartLib.BasicHorizontalChart.apply(this);
+	this.type = "groupedBarChart";
 
 	this.init = function (element) {
 		// call super init
-		this.initDefault(element);
+		this.initHorizontalChart(element);
 
 		// Title of TargetGraph
 		if (!this._titleNode) {
@@ -770,5 +730,5 @@ ChartLib.GroupedBarChart = function (element) {
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.GroupedBarChart.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.GroupedBarChart.prototype = Object.create( ChartLib.BasicHorizontalChart.prototype );
 ChartLib.GroupedBarChart.prototype.constructor = ChartLib.GroupedBarChart;

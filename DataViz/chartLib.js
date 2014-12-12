@@ -9,14 +9,14 @@
 
 var ChartLib = ChartLib || {};
 
-
 /**
-* Horizontal TargetGraph, introduced by Kohlhammer et al.
+* Basic Chart "class".
 */
-ChartLib.HorizontalTargetGraph = function (element) {
+ChartLib.BasicChart = function (element) {
+
 	// inherit Pixi.js Graphics object
 	PIXI.Graphics.apply(this, arguments);
-	this.type = "horizontalTargetGraph";
+	this.type = "basicChart";
 
 	// make the graphic interactive..
 	this.interactive = true;
@@ -27,13 +27,7 @@ ChartLib.HorizontalTargetGraph = function (element) {
 	// flag for updateAnimation
 	this.animate = true;
 
-
-	this.init = function (element) {
-		// measures = [last, current, plan]
-		this.measures = [ parseFloat(element.getAttribute("val_last")),
-		parseFloat(element.getAttribute("val_current")),
-		parseFloat(element.getAttribute("val_plan")) ];
-
+	this.initDefault = function (element) {
 		// device pixel ratio stuff
 		this._scale = parseFloat(element.getAttribute("scale"));
 		this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
@@ -41,9 +35,78 @@ ChartLib.HorizontalTargetGraph = function (element) {
 		// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
 		this._x = parseFloat(element.getAttribute("x")) * this._scale;
 		this._y = parseFloat(element.getAttribute("y")) * this._scale;
-		this._height = parseFloat(element.getAttribute("height")) * this._scale;
+		this._height = parseFloat(element.getAttribute("height")) // dont scale it yet
+		this._width = parseFloat(element.getAttribute("width")); // dont scale it yet
+
 		// Title
 		this._title = element.getAttribute("title");
+
+		// domain
+		this.domain_min = parseFloat(element.getAttribute("domain_min"));
+		this.domain_max = parseFloat(element.getAttribute("domain_max"));
+		this.domain = [this.domain_min, this.domain_max];
+
+		// set animate to true, because there is new data in town!
+		this.animate = true;
+	}
+
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.BasicChart.prototype = PIXI.Graphics.prototype;
+ChartLib.BasicChart.prototype.constructor = ChartLib.BasicChart;
+
+/**
+* Calculate the width of a given value (linear scaling).
+* @parameter val
+*/
+ChartLib.BasicChart.prototype.calc_width = function (val) {
+	var width = d3.scale.linear()
+	.domain(this.domain)
+	.range( this.range);
+	return Math.floor(width(val));
+};
+
+/**
+* Calculate the width of a given value (linear scaling).
+* @parameter val
+*/
+ChartLib.BasicChart.prototype.calc_height = function (val) {
+	var height = d3.scale.linear()
+	.domain(this.domain)
+	.range( this.range);
+	return Math.floor(height(val));
+};
+
+/**
+* Update values and redraw.
+*/
+ChartLib.BasicChart.prototype.update = function (element) {
+	this.init(element);
+	this.draw();
+};
+
+/**
+* Draw method each chart should override.
+* draw()
+*/
+
+/**
+* Horizontal TargetGraph, introduced by Kohlhammer et al.
+*/
+ChartLib.HorizontalTargetGraph = function (element) {
+
+	ChartLib.BasicChart.apply(this);
+	this.type = "horizontalTargetGraph";
+
+	this.init = function (element) {
+		// call super init
+		this.initDefault(element);
+
+		// measures = [last, current, plan]
+		this.measures = [ parseFloat(element.getAttribute("val_last")),
+		parseFloat(element.getAttribute("val_current")),
+		parseFloat(element.getAttribute("val_plan")) ];
 
 		// Title of TargetGraph
 		if (!this._titleNode) {
@@ -60,11 +123,11 @@ ChartLib.HorizontalTargetGraph = function (element) {
 			this.addChild(this._titleNode);
 		}
 
-		// actual TargetGraph width of current val (graphic attribute, does not correspond to the value)
-		this._width = parseFloat(element.getAttribute("width"));
-
 		// max width of bar: max graphical width - width of valuetext
 		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
+
+		// scale height
+		this._height = this._height * this._scale;
 
 		this.range = [0, this.max_width - this._titleWidth];
 
@@ -76,10 +139,6 @@ ChartLib.HorizontalTargetGraph = function (element) {
 		// calc domain
 		var measurez = [this.measures[0], this.measures[1], this.measures[2]];
 		measurez.sort(d3.descending);
-
-		this.domain_min = parseFloat(element.getAttribute("domain_min"));
-		this.domain_max = parseFloat(element.getAttribute("domain_max"));
-		this.domain = [this.domain_min, this.domain_max];
 
 		// calc axis
 		this._axisScale = d3.scale.linear()
@@ -97,17 +156,6 @@ ChartLib.HorizontalTargetGraph = function (element) {
 			this._valueNode.position.y = (this._y + (this._height/2)) - (this._valueNode.height / 2);
 			this.addChild(this._valueNode);
 		}
-
-		// set animate to true, because there is new data in town!
-		this.animate = true;
-	};
-
-	// calculate the width of a given value (linear scaling)
-	this.calc_width = function (val) {
-		var width = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-		return Math.floor(width(val));
 	};
 
 	this.draw = function () {
@@ -140,59 +188,31 @@ ChartLib.HorizontalTargetGraph = function (element) {
 		this.endFill();
 	};
 
-	// update values and redraw
-	this.update = function (element) {
-		this.init(element);
-		this.draw();
-	};
-
-	// draw chart
 	this.init(element);
-
 	this.draw();
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.HorizontalTargetGraph.prototype = PIXI.Graphics.prototype;
+ChartLib.HorizontalTargetGraph.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.HorizontalTargetGraph.prototype.constructor = ChartLib.HorizontalTargetGraph;
+
 
 /**
 * Vertical TargetGraph, introduced by Kohlhammer et al.
 */
 ChartLib.VerticalTargetGraph = function (element) {
-	// inherit Pixi.js Graphics object
-	PIXI.Graphics.apply(this, arguments);
+
+	ChartLib.BasicChart.apply(this);
 	this.type = "verticalTargetGraph";
 
-	// make the graphic interactive..
-	this.interactive = true;
-
-	// bind element
-	this.element = element;
-
-	// flag for updateAnimation
-	this.animate = true;
-
 	this.init = function (element) {
+		// call super init
+		this.initDefault(element);
+
 		// measures = [last, current, plan]
 		this.measures = [ parseFloat(element.getAttribute("val_last")),
 		parseFloat(element.getAttribute("val_current")),
 		parseFloat(element.getAttribute("val_plan")) ];
-
-		// device pixel ratio stuff
-		this._scale = parseFloat(element.getAttribute("scale"));
-		this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
-
-		// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
-		this._x = parseFloat(element.getAttribute("x")) * this._scale;
-		this._y = parseFloat(element.getAttribute("y")) * this._scale;
-
-		// actual TargetGraph height of current val (graphic attribute, does not correspond to the value)
-		this._height = parseFloat(element.getAttribute("height")) ;
-		this._width = parseFloat(element.getAttribute("width")) * this._scale;
-
-		// Title
-		this._title = element.getAttribute("title");
 
 		// calc new x pos for TargetGraph graphics
 		this._targetGraph_y = this._y - (this._pxs * 0.3);
@@ -222,10 +242,6 @@ ChartLib.VerticalTargetGraph = function (element) {
 		var measurez = [this.measures[0], this.measures[1], this.measures[2]];
 		measurez.sort(d3.descending);
 
-		this.domain_min = parseFloat(element.getAttribute("domain_min"));
-		this.domain_max = parseFloat(element.getAttribute("domain_max"));
-		this.domain = [this.domain_min, this.domain_max];
-
 		// calc axis
 		this._axisScale = d3.scale.linear()
 		.domain(this.domain)
@@ -243,17 +259,6 @@ ChartLib.VerticalTargetGraph = function (element) {
 			this.addChild(this._valueNode);
 			console.log(this._valueNode);
 		}
-
-		// set animate to true, because there is new data in town!
-		this.animate = true;
-	};
-
-	// calculate the width of a given value (linear scaling)
-	this.calc_height = function (val) {
-		var height = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-		return Math.floor(height(val));
 	};
 
 	this.draw = function () {
@@ -286,54 +291,25 @@ ChartLib.VerticalTargetGraph = function (element) {
 		this.endFill();
 	};
 
-	// update values and redraw
-	this.update = function (element) {
-		this.init(element);
-		this.draw();
-	};
-
-	// draw chart
 	this.init(element);
-
 	this.draw();
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.VerticalTargetGraph.prototype = PIXI.Graphics.prototype;
+ChartLib.VerticalTargetGraph.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.VerticalTargetGraph.prototype.constructor = ChartLib.VerticalTargetGraph;
 
 /**
 * Bar Chart
 */
 ChartLib.BarChart = function (element) {
-	// inherit Pixi.js Graphics object
-	PIXI.Graphics.apply(this, arguments);
+
+	ChartLib.BasicChart.apply(this);
 	this.type = "barChart";
 
-	// make the graphic interactive..
-	this.interactive = true;
-
-	// bind element
-	this.element = element;
-
-	// flag for updateAnimation
-	this.animate = true;
-
 	this.init = function (element) {
-		// device pixel ratio stuff
-		this._scale = parseFloat(element.getAttribute("scale"));
-		this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
-
-		// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
-		this._x = parseFloat(element.getAttribute("x")) * this._scale;
-		this._y = parseFloat(element.getAttribute("y")) * this._scale;
-
-		// actual TargetGraph height of current val (graphic attribute, does not correspond to the value)
-		this._height = parseFloat(element.getAttribute("height")) * this._scale;
-		this._width = parseFloat(element.getAttribute("width")) * this._scale;
-
-		// Title
-		this._title = element.getAttribute("title");
+		// call super init
+		this.initDefault(element);
 
 		// Title of TargetGraph
 		if (!this._titleNode) {
@@ -350,18 +326,10 @@ ChartLib.BarChart = function (element) {
 			this.addChild(this._titleNode);
 		}
 
-		// actual TargetGraph width of current val (graphic attribute, does not correspond to the value)
-		this._width = parseFloat(element.getAttribute("width"));
-
 		// max width of bar: max graphical width - width of valuetext
 		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
 
 		this.range = [0, this.max_width - this._titleWidth];
-
-		// calculate domain
-		this.domain_min = parseFloat(element.getAttribute("domain_min"));
-		this.domain_max = parseFloat(element.getAttribute("domain_max"));
-		this.domain = [this.domain_min, this.domain_max];
 
 		// calc axis
 		this._axisScale = d3.scale.linear()
@@ -376,17 +344,6 @@ ChartLib.BarChart = function (element) {
 			this._valueNode.position.y = (this._y + (this._height/2)) - (this._valueNode.height / 2);
 			this.addChild(this._valueNode);
 		}
-
-		// set animate to true, because there is new data in town!
-		this.animate = true;
-	}
-
-	// calculate the width of a given value (linear scaling)
-	this.calc_width = function (val) {
-		var width = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-		return Math.floor(width(val));
 	};
 
 	this.draw = function () {
@@ -398,53 +355,27 @@ ChartLib.BarChart = function (element) {
 		this.endFill();
 
 		this._valueNode.position.x = this._targetGraph_x + this.calc_width(this._width) + 0.3*this._pxs;
-	}
-
-	this.update = function (element) {
-		this.init(element);
-		this.draw();
-	}
+	};
 
 	this.init(element);
 	this.draw();
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.BarChart.prototype = PIXI.Graphics.prototype;
+ChartLib.BarChart.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.BarChart.prototype.constructor = ChartLib.BarChart;
 
 /**
 * Column Chart
 */
 ChartLib.ColumnChart = function (element) {
-	// inherit Pixi.js Graphics object
-	PIXI.Graphics.apply(this, arguments);
+
+	ChartLib.BasicChart.apply(this);
 	this.type = "columnChart";
 
-	// make the graphic interactive..
-	this.interactive = true;
-
-	// bind element
-	this.element = element;
-
-	// flag for updateAnimation
-	this.animate = true;
-
 	this.init = function (element) {
-		// device pixel ratio stuff
-		this._scale = parseFloat(element.getAttribute("scale"));
-		this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
-
-		// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
-		this._x = parseFloat(element.getAttribute("x")) * this._scale;
-		this._y = parseFloat(element.getAttribute("y")) * this._scale;
-
-		// actual TargetGraph height of current val (graphic attribute, does not correspond to the value)
-		this._width = parseFloat(element.getAttribute("width")) * this._scale;
-		this._height = parseFloat(element.getAttribute("height"));
-
-		// Title
-		this._title = element.getAttribute("title");
+		// call super init
+		this.initDefault(element);
 
 		// calc new x pos for TargetGraph graphics
 		this._targetGraph_y = this._y - (this._pxs * 0.3);
@@ -466,11 +397,6 @@ ChartLib.ColumnChart = function (element) {
 		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1*this._pxs;
 
 		this.range = [0, this.max_height];
-
-		// calculate domain
-		this.domain_min = parseFloat(element.getAttribute("domain_min"));
-		this.domain_max = parseFloat(element.getAttribute("domain_max"));
-		this.domain = [this.domain_min, this.domain_max];
 
 		// calc axis
 		this._axisScale = d3.scale.linear()
@@ -485,18 +411,7 @@ ChartLib.ColumnChart = function (element) {
 			this._valueNode.position.x = (this._x + (this._width/2)) - (this._valueNode.width / 2);
 			this.addChild(this._valueNode);
 		}
-
-		// set animate to true, because there is new data in town!
-		this.animate = true;
 	}
-
-	// calculate the width of a given value (linear scaling)
-	this.calc_height = function (val) {
-		var height = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-		return Math.floor(height(val));
-	};
 
 	this.draw = function () {
 		this.clear();
@@ -509,51 +424,25 @@ ChartLib.ColumnChart = function (element) {
 		this._valueNode.position.y = this._targetGraph_y - this.calc_height(this._height) - 1.3*this._pxs;
 	}
 
-	this.update = function (element) {
-		this.init(element);
-		this.draw();
-	}
-
 	this.init(element);
 	this.draw();
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.ColumnChart.prototype = PIXI.Graphics.prototype;
+ChartLib.ColumnChart.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.ColumnChart.prototype.constructor = ChartLib.ColumnChart;
 
 /**
 * Stacked Column Chart
 */
 ChartLib.StackedColumnChart = function (element) {
-	// inherit Pixi.js Graphics object
-	PIXI.Graphics.apply(this, arguments);
+
+	ChartLib.BasicChart.apply(this);
 	this.type = "stackedColumnChart";
 
-	// make the graphic interactive..
-	this.interactive = true;
-
-	// bind element
-	this.element = element;
-
-	// flag for updateAnimation
-	this.animate = true;
-
 	this.init = function (element) {
-		// device pixel ratio stuff
-		this._scale = parseFloat(element.getAttribute("scale"));
-		this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
-
-		// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
-		this._x = parseFloat(element.getAttribute("x")) * this._scale;
-		this._y = parseFloat(element.getAttribute("y")) * this._scale;
-
-		// actual TargetGraph height of current val (graphic attribute, does not correspond to the value)
-		this._width = parseFloat(element.getAttribute("width")) * this._scale;
-		this._height = parseFloat(element.getAttribute("height"));
-
-		// Title
-		this._title = element.getAttribute("title");
+		// call super init
+		this.initDefault(element);
 
 		// calc new x pos for TargetGraph graphics
 		this._targetGraph_y = this._y - (this._pxs * 0.3);
@@ -575,11 +464,6 @@ ChartLib.StackedColumnChart = function (element) {
 		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1*this._pxs;
 
 		this.range = [0, this.max_height];
-
-		// calculate domain
-		this.domain_min = parseFloat(element.getAttribute("domain_min"));
-		this.domain_max = parseFloat(element.getAttribute("domain_max"));
-		this.domain = [this.domain_min, this.domain_max];
 
 		// calc axis
 		this._axisScale = d3.scale.linear()
@@ -609,17 +493,6 @@ ChartLib.StackedColumnChart = function (element) {
 				this._values_sum += parseFloat(this._values[i]);
 			}
 		}
-
-		// set animate to true, because there is new data in town!
-		this.animate = true;
-	};
-
-	// calculate the width of a given value (linear scaling)
-	this.calc_height = function (val) {
-		var height = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-		return Math.floor(height(val));
 	};
 
 	this.draw = function() {
@@ -639,51 +512,26 @@ ChartLib.StackedColumnChart = function (element) {
 		}
 	};
 
-	this.update = function(element) {
-		this.init(element);
-		this.draw();
-	};
-
-	this.init(this.element);
+	this.init(element);
 	this.draw();
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.StackedColumnChart.prototype = PIXI.Graphics.prototype;
+ChartLib.StackedColumnChart.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.StackedColumnChart.prototype.constructor = ChartLib.StackedColumnChart;
 
 /**
 * Stacked Bar Chart
 */
 ChartLib.StackedBarChart = function (element) {
-	// inherit Pixi.js Graphics object
-	PIXI.Graphics.apply(this, arguments);
+
+	ChartLib.BasicChart.apply(this);
 	this.type = "stackedBarChart";
 
-	// make the graphic interactive..
-	this.interactive = true;
-
-	// bind element
-	this.element = element;
-
-	// flag for updateAnimation
-	this.animate = true;
-
 	this.init = function (element) {
-		// device pixel ratio stuff
-		this._scale = parseFloat(element.getAttribute("scale"));
-		this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
+		// call super init
+		this.initDefault(element);
 
-		// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
-		this._x = parseFloat(element.getAttribute("x")) * this._scale;
-		this._y = parseFloat(element.getAttribute("y")) * this._scale;
-
-		// actual TargetGraph height of current val (graphic attribute, does not correspond to the value)
-		this._width = parseFloat(element.getAttribute("width")) * this._scale;
-		this._height = parseFloat(element.getAttribute("height")) * this._scale;
-
-		// Title
-		this._title = element.getAttribute("title");
 		// Title of TargetGraph
 		if (!this._titleNode) {
 			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
@@ -699,18 +547,10 @@ ChartLib.StackedBarChart = function (element) {
 			this.addChild(this._titleNode);
 		}
 
-		// actual TargetGraph width of current val (graphic attribute, does not correspond to the value)
-		this._width = parseFloat(element.getAttribute("width"));
-
 		// max width of bar: max graphical width - width of valuetext
 		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
 
 		this.range = [0, this.max_width - this._titleWidth];
-
-		// calculate domain
-		this.domain_min = parseFloat(element.getAttribute("domain_min"));
-		this.domain_max = parseFloat(element.getAttribute("domain_max"));
-		this.domain = [this.domain_min, this.domain_max];
 
 		// calc axis
 		this._axisScale = d3.scale.linear()
@@ -737,19 +577,7 @@ ChartLib.StackedBarChart = function (element) {
 				this._values_sum += parseFloat(this._values[i]);
 			}
 		}
-
-		// set animate to true, because there is new data in town!
-		this.animate = true;
 	}
-
-	// calculate the width of a given value (linear scaling)
-	this.calc_width = function (val) {
-		var width = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-		return Math.floor(width(val));
-	};
-
 
 	this.draw = function() {
 		this.clear();
@@ -767,52 +595,25 @@ ChartLib.StackedBarChart = function (element) {
 		}
 	};
 
-	this.update = function(element) {
-		this.init(element);
-		this.draw();
-	};
-
-	this.init(this.element);
+	this.init(element);
 	this.draw();
-
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.StackedBarChart.prototype = PIXI.Graphics.prototype;
+ChartLib.StackedBarChart.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.StackedBarChart.prototype.constructor = ChartLib.StackedBarChart;
 
 /**
 * Grouped Column Chart
 */
 ChartLib.GroupedColumnChart = function (element) {
-	// inherit Pixi.js Graphics object
-	PIXI.Graphics.apply(this, arguments);
+
+	ChartLib.BasicChart.apply(this);
 	this.type = "groupedColumnChart";
 
-	// make the graphic interactive..
-	this.interactive = true;
-
-	// bind element
-	this.element = element;
-
-	// flag for updateAnimation
-	this.animate = true;
-
 	this.init = function (element) {
-		// device pixel ratio stuff
-		this._scale = parseFloat(element.getAttribute("scale"));
-		this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
-
-		// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
-		this._x = parseFloat(element.getAttribute("x")) * this._scale;
-		this._y = parseFloat(element.getAttribute("y")) * this._scale;
-
-		// actual TargetGraph height of current val (graphic attribute, does not correspond to the value)
-		this._width = parseFloat(element.getAttribute("width")) * this._scale;
-		this._height = parseFloat(element.getAttribute("height")) * this._scale;
-
-		// Title
-		this._title = element.getAttribute("title");
+		// call super init
+		this.initDefault(element);
 
 		// calc new x pos for TargetGraph graphics
 		this._targetGraph_y = this._y - (this._pxs * 0.3);
@@ -834,11 +635,6 @@ ChartLib.GroupedColumnChart = function (element) {
 		this.max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 1*this._pxs;
 
 		this.range = [0, this.max_height];
-
-		// calculate domain
-		this.domain_min = parseFloat(element.getAttribute("domain_min"));
-		this.domain_max = parseFloat(element.getAttribute("domain_max"));
-		this.domain = [this.domain_min, this.domain_max];
 
 		// calc axis
 		this._axisScale = d3.scale.linear()
@@ -866,17 +662,6 @@ ChartLib.GroupedColumnChart = function (element) {
 				this._values_sum += parseFloat(this._values[i]);
 			}
 		}
-
-		// set animate to true, because there is new data in town!
-		this.animate = true;
-	};
-
-	// calculate the width of a given value (linear scaling)
-	this.calc_height = function (val) {
-		var height = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-		return Math.floor(height(val));
 	};
 
 	this.draw = function (element) {
@@ -895,52 +680,25 @@ ChartLib.GroupedColumnChart = function (element) {
 		}
 	};
 
-	this.update = function (element) {
-		this.init(element);
-		this.draw();
-	};
-
 	this.init(element);
 	this.draw();
-
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.GroupedColumnChart.prototype = PIXI.Graphics.prototype;
+ChartLib.GroupedColumnChart.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.GroupedColumnChart.prototype.constructor = ChartLib.GroupedColumnChart;
 
 /**
 * Grouped Bar Chart
 */
 ChartLib.GroupedBarChart = function (element) {
-	// inherit Pixi.js Graphics object
-	PIXI.Graphics.apply(this, arguments);
-	this.type = "groupedBarChart";
 
-	// make the graphic interactive..
-	this.interactive = true;
-
-	// bind element
-	this.element = element;
-
-	// flag for updateAnimation
-	this.animate = true;
+	ChartLib.BasicChart.apply(this);
+	this.type = "horizontalTargetGraph";
 
 	this.init = function (element) {
-		// device pixel ratio stuff
-		this._scale = parseFloat(element.getAttribute("scale"));
-		this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
-
-		// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
-		this._x = parseFloat(element.getAttribute("x")) * this._scale;
-		this._y = parseFloat(element.getAttribute("y")) * this._scale;
-
-		// actual TargetGraph height of current val (graphic attribute, does not correspond to the value)
-		this._width = parseFloat(element.getAttribute("width")) * this._scale;
-		this._height = parseFloat(element.getAttribute("height")) * this._scale;
-
-		// Title
-		this._title = element.getAttribute("title");
+		// call super init
+		this.initDefault(element);
 
 		// Title of TargetGraph
 		if (!this._titleNode) {
@@ -957,18 +715,10 @@ ChartLib.GroupedBarChart = function (element) {
 			this.addChild(this._titleNode);
 		}
 
-		// actual TargetGraph width of current val (graphic attribute, does not correspond to the value)
-		this._width = parseFloat(element.getAttribute("width"));
-
 		// max width of bar: max graphical width - width of valuetext
 		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
 
 		this.range = [0, this.max_width - this._titleWidth];
-
-		// calculate domain
-		this.domain_min = parseFloat(element.getAttribute("domain_min"));
-		this.domain_max = parseFloat(element.getAttribute("domain_max"));
-		this.domain = [this.domain_min, this.domain_max];
 
 		// calc axis
 		this._axisScale = d3.scale.linear()
@@ -996,18 +746,8 @@ ChartLib.GroupedBarChart = function (element) {
 				this._values_sum += parseFloat(this._values[i]);
 			}
 		}
-
-		// set animate to true, because there is new data in town!
-		this.animate = true;
 	}
 
-	// calculate the width of a given value (linear scaling)
-	this.calc_width = function (val) {
-		var width = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
-		return Math.floor(width(val));
-	};
 
 	this.draw = function (element) {
 		this.clear();
@@ -1025,17 +765,10 @@ ChartLib.GroupedBarChart = function (element) {
 		}
 	};
 
-	this.update = function(element) {
-		this.init(element);
-		this.draw();
-	};
-
-	this.init(this.element);
+	this.init(element);
 	this.draw();
-
-
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.GroupedBarChart.prototype = PIXI.Graphics.prototype;
+ChartLib.GroupedBarChart.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.GroupedBarChart.prototype.constructor = ChartLib.GroupedBarChart;

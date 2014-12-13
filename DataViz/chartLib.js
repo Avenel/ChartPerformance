@@ -12,42 +12,48 @@ var ChartLib = ChartLib || {};
 /**
 * Basic Chart "class".
 */
-ChartLib.BasicChart = function (element) {
+ChartLib.BasicChart = function(element) {
 
 	// inherit Pixi.js Graphics object
 	PIXI.Graphics.apply(this, arguments);
-	this.type = "basicChart";
+	this._type = "basicChart";
 
 	// make the graphic interactive..
-	this.interactive = true;
+	this._interactive = true;
 
 	// bind element
-	this.element = element;
+	this._element = element;
 
 	// flag for updateAnimation
-	this.animate = true;
+	this._animate = true;
 
-	this.initDefault = function (element) {
+	this.initDefault = function(element) {
+		console.log("update");
+		this._element = element;
+
 		// device pixel ratio stuff
 		this._scale = parseFloat(element.getAttribute("scale"));
 		this._pxs = parseFloat(element.getAttribute("pxs")) * this._scale;
 
-		// have to use underscore as a prefix due to weired issues (perhaps value will be overidden by another call....)
+		// have to use underscore as a prefix due to weired issues (perhaps value
+		// will be overidden by another call....)
 		this._x = parseFloat(element.getAttribute("x")) * this._scale;
 		this._y = parseFloat(element.getAttribute("y")) * this._scale;
-		this._height = parseFloat(element.getAttribute("height")) // dont scale it yet
-		this._width = parseFloat(element.getAttribute("width")); // dont scale it yet
 
 		// Title
 		this._title = element.getAttribute("title");
 
 		// domain
-		this.domain_min = parseFloat(element.getAttribute("domain_min"));
-		this.domain_max = parseFloat(element.getAttribute("domain_max"));
-		this.domain = [this.domain_min, this.domain_max];
+		this._domain_min = parseFloat(element.getAttribute("domain_min"));
+		this._domain_max = parseFloat(element.getAttribute("domain_max"));
+		this._domain = [this._domain_min, this._domain_max];
 
 		// set animate to true, because there is new data in town!
-		this.animate = true;
+		this._animate = true;
+
+		// add container for category labels
+		this._categoryLabelContainer = new PIXI.DisplayObjectContainer();
+		this.addChild(this._categoryLabelContainer);
 	}
 
 }
@@ -57,31 +63,10 @@ ChartLib.BasicChart.prototype = PIXI.Graphics.prototype;
 ChartLib.BasicChart.prototype.constructor = ChartLib.BasicChart;
 
 /**
-* Calculate the width of a given value (linear scaling).
-* @parameter val
-*/
-ChartLib.BasicChart.prototype.calc_width = function (val) {
-	var width = d3.scale.linear()
-	.domain(this.domain)
-	.range( this.range);
-	return Math.floor(width(val));
-};
-
-/**
-* Calculate the width of a given value (linear scaling).
-* @parameter val
-*/
-ChartLib.BasicChart.prototype.calc_height = function (val) {
-	var height = d3.scale.linear()
-	.domain(this.domain)
-	.range( this.range);
-	return Math.floor(height(val));
-};
-
-/**
 * Update values and redraw.
 */
 ChartLib.BasicChart.prototype.update = function (element) {
+	this._animate = true;
 	this.init(element);
 	this.draw();
 };
@@ -104,37 +89,53 @@ ChartLib.BasicHorizontalChart = function (element) {
 		// call super init
 		this.initDefault(element);
 
-		// scale height
-		this._height = this._height * this._scale;
+		// current width of chart, necessary for animating transitions
+		this._currentWidth = parseFloat(element.getAttribute("current_width"));
 
-		// Title
-		if (!this._titleNode) {
-			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: (this._pxs) + "px arial", fill:"black",
-			wordWrap: true, wordWrapWith: this._titleWidth, align:"right"});
+		// scale categoryHeight
+		this._categoryHeight = parseFloat(element.getAttribute("category_height")) * this._scale;
 
-			// calculate textposition
-			this._titleNode.position.x = this._x + (this._titleWidth - this._titleNode.width);
-			this._titleNode.position.y = (this._y + (this._height/2)) - (this._titleNode.height / 2);
+		// category label width
+		this._categoryLabelWidth = parseFloat(element.getAttribute("category_label_width")) * this._scale;
 
-			// calc new x pos for TargetGraph graphics
-			this._targetGraph_x = this._x + this._titleWidth + 0.3*pxs;
-			this.addChild(this._titleNode);
+		// calc x pos for chart axis
+		this._axis_x = this._x + this._categoryLabelWidth + 0.3 * this._pxs;
+
+		// category labels
+		if (!this._categoryLabels) {
+			this._categoryLabels = new Array();
+
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				var categoryName = child.getAttribute("category_name");
+				var categoryLabel = new PIXI.Text(categoryName, {font: (this._pxs) + "px arial", fill:"black",
+				wordWrap: true, wordWrapWith: this._categoryLabelWidth, align:"right"});
+
+				// calculate textposition
+				categoryLabel.position.x = this._x + (this._categoryLabelWidth - categoryLabel.width);
+
+				var yPos = parseFloat(child.getAttribute("y")) * this._scale;
+				categoryLabel.position.y = (yPos + (this._categoryHeight/2)) - (categoryLabel.height / 2);
+
+				this._categoryLabels[this._categoryLabels.length] = categoryLabel;
+				this._categoryLabelContainer.addChild(categoryLabel);
+			}
 		}
 
 		// max width of bar: max graphical width - width of valuetext
-		this.max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
+		this._max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
 
 		// calc axis
-		this.range = [0, this.max_width - this._titleWidth];
+		this._range = [0, this._max_width - this._categoryLabelWidth];
 		this._axisScale = d3.scale.linear()
-		.domain(this.domain)
-		.range( this.range);
+			.domain(this._domain)
+			.range( this._range);
+
+
 
 		// axis ticks
 		var _arguments = [8];
-		this.tickFormat = this._axisScale.tickFormat.apply(this._scale, _arguments);
-		this.ticks = this._axisScale.ticks.apply(this._axisScale, _arguments)
+		this._tickFormat = this._axisScale.tickFormat.apply(this._scale, _arguments);
+		this._ticks = this._axisScale.ticks.apply(this._axisScale, _arguments);
 	}
 }
 
@@ -155,23 +156,34 @@ ChartLib.BasicVerticalChart = function (element) {
 		// call super init
 		this.initDefault(element);
 
-		// calc new x pos for TargetGraph graphics
-		this._targetGraph_y = this._y - (this._pxs * 0.3);
+		// current height of chart, necessary for animating transitions
+		this._currentHeight = parseFloat(element.getAttribute("currentHeight"));
 
-		// scale width
-		this._width = this._width * this._scale;
+		// scale categoryWidth
+		this._categoryWidth = parseFloat(element.getAttribute("categoryWidth")) * this._scale;
 
-		// Title of TargetGraph
-		if (!this._titleNode) {
-			this._titleWidth = parseFloat(element.getAttribute("title_width")) * this._scale;
-			this._titleNode = new PIXI.Text(this._title, {font: this._pxs + "px arial", fill:"black",
-			wordWrap: true, wordWrapWith: this._titleWidth, align:"center"});
+		// calc y pos for Chart axis
+		this._axis_y = this._y - (this._pxs * 0.3);
 
-			// calculate textposition
-			this._titleNode.position.x = this._x + this._width/2 - (this._titleNode.width / 2);
-			this._titleNode.position.y = this._y ;
+		// category label width
+		this._categoryLabelWidth = parseFloat(element.getAttribute("categoryLabelWidth")) * this._scale;
 
-			this.addChild(this._titleNode);
+		// category labels
+		if (!this._categoryLabelNodes) {
+			this._categoryLabels = new Array();
+
+			for (var child = this._element.firstChild; child; child = child.nextSibling) {
+				var categoryName = element.getAttribute("categoryName");
+				var categoryLabel = new PIXI.Text(categoryName, {font: this._pxs + "px arial", fill:"black",
+				wordWrap: true, wordWrapWith: this._categoryLabelWidth, align:"center"});
+
+				// calculate textposition
+				this.categoryLabel.position.x = this._x + this._width/2 - (this._titleNode.width / 2);
+				this.categoryLabel.position.y = this._y ;
+
+				this._categoryLabels[this._categoryLabels.length] = categoryLabel;
+				this._categoryLabelContainer.addChild(categoryLabel);
+			}
 		}
 
 		// max width of bar: max graphical width - width of valuetext
@@ -219,9 +231,9 @@ ChartLib.HorizontalTargetGraph = function (element) {
 		// value of current value
 		if (!this._valueNode) {
 			this._valueNode = new PIXI.Text(this.measures[1], {font: (this._pxs ) + "px arial", fill:"black"});
-			this._valueNode.position.x = this._targetGraph_x + this.calc_width(this.domain_max) + 0.3*this._pxs;
+			this._valueNode.position.x = this._targetGraph_x + this.calc_width(this.domain_max) + 0.3 * this._pxs;
 			this._valueNode.position.y = (this._y + (this._height/2)) - (this._valueNode.height / 2);
-			this.addChild(this._valueNode);
+			this._categoryLabelContainer.addChild(this._valueNode);
 		}
 	};
 
@@ -292,7 +304,6 @@ ChartLib.VerticalTargetGraph = function (element) {
 			this._valueNode.position.y = this._targetGraph_y - this.calc_height(this.domain_max) - 1.3*this._pxs;
 			this._valueNode.position.x = (this._x + (this._width/2)) - (this._valueNode.width / 2);
 			this.addChild(this._valueNode);
-			console.log(this._valueNode);
 		}
 	};
 
@@ -334,6 +345,42 @@ ChartLib.VerticalTargetGraph = function (element) {
 ChartLib.VerticalTargetGraph.prototype = Object.create( ChartLib.BasicVerticalChart.prototype );
 ChartLib.VerticalTargetGraph.prototype.constructor = ChartLib.VerticalTargetGraph;
 
+
+
+/**
+* Bar - graphical object
+*/
+ChartLib.Bar = function (x, y, val, width, height, valueLabel, color, pxs) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+
+	this._x = x;
+	this._y = y;
+	this._val = val;
+	this._width = width;
+	this._height = height;
+	this._color = color;
+	this._pxs = pxs;
+
+	this._valueLabel = valueLabel;
+	this.addChild(this._valueLabel);
+
+	// draw simple bar
+	this.draw = function() {
+		this.beginFill(this._color);
+		this.drawRect( this._x, this._y, this._width, this._height);
+		this.endFill();
+
+		this._valueLabel.position.x = this._x + this._width + 0.3*this._pxs;
+	};
+
+	this.draw();
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.Bar.prototype = PIXI.Graphics.prototype;
+ChartLib.Bar.prototype.constructor = ChartLib.Bar;
+
 /**
 * Bar Chart
 */
@@ -346,25 +393,35 @@ ChartLib.BarChart = function (element) {
 		// call super init
 		this.initHorizontalChart(element);
 
+		if (!this.barContainer) {
+			this.barContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.barContainer);
+		}
+
 		// value of current value
-		this._value = parseFloat(element.getAttribute("value"));
-		if (!this._valueNode) {
-			this._valueNode = new PIXI.Text(this._value, {font: (this._pxs ) + "px arial", fill:"black"});
-			this._valueNode.position.x = this._targetGraph_x + this.calc_width(this._width) + 0.3*this._pxs;
-			this._valueNode.position.y = (this._y + (this._height/2)) - (this._valueNode.height / 2);
-			this.addChild(this._valueNode);
+		this.values = new Array();
+		this.barContainer.removeChildren();
+		for (var child = element.firstChild; child; child = child.nextSibling) {
+			var val = parseFloat(child.getAttribute("value"));
+
+			// value label
+			var barWidth = this._axisScale(val);
+			var barY = parseFloat(child.getAttribute("y")) * this._scale;
+			var currentBarWidth = (val > this._currentWidth)? this._axisScale(this._currentWidth) : barWidth;
+
+			var valueLabel = new PIXI.Text(val, {font: (this._pxs ) + "px arial", fill:"black"});
+			valueLabel.position.x = this._axis_x + barWidth + 0.3*this._pxs;
+			valueLabel.position.y = (barY + (this._categoryHeight/2)) - (valueLabel.height / 2);
+
+			var bar = new ChartLib.Bar(this._axis_x, barY, val, currentBarWidth, this._categoryHeight, valueLabel, 0x000000, this._pxs);
+			this.barContainer.addChild(bar)
+
+			this.values[this.values.length] = val;
 		}
 	};
 
 	this.draw = function () {
-		this.clear();
-
-		// current val
-		this.beginFill(0x000000);
-		this.drawRect( this._targetGraph_x, this._y, this.calc_width(this._width, this.range), this._height);
-		this.endFill();
-
-		this._valueNode.position.x = this._targetGraph_x + this.calc_width(this._width) + 0.3*this._pxs;
+		// draw axis.
 	};
 
 	this.init(element);
@@ -462,7 +519,7 @@ ChartLib.StackedColumnChart = function (element) {
 			this.endFill();
 
 			this._valueNodes[i].position.y = this._targetGraph_y - current_height - this.calc_height(relHeight) +
-																				this.calc_height(relHeight)/2 - this._valueNodes[i].height/2;
+			this.calc_height(relHeight)/2 - this._valueNodes[i].height/2;
 			current_height += this.calc_height((this._values[i] / this._values_sum) * this._height);
 		}
 	};

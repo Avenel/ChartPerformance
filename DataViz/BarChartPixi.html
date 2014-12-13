@@ -55,87 +55,74 @@
   d3.select("body").append("custom:renderer")
   .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
 
-
-  // container element for bulletGraphics
-  var graphics = new Array();
-
-  // indicates if animation should be active or not (one should not animate, if the viz is already static)
-  var global_animate = true
-
-  // add render view to DOM
-  document.body.appendChild(renderer.view);
-
-  // Add our "custom" sketch element to the body.
-  var sketch = d3.select("body").append("cxustom:sketch")
-  .attr("width", w)
-  .attr("height", h);
-
   // calculate yPosition of bullet
   var yPos = d3.scale.ordinal()
   .domain( d3.range( bullets.length ) )
   .rangeRoundBands( [0, h - (2*padding)], 1/3); // IBCS: category width = 1.8fs -> Space = 1/3 * 1.8fs
+
+
+  // Add our "custom" sketch element to the body.
+  var sketch = d3.select("body").append("cxustom:sketch")
+  .attr("width", w)
+  .attr("height", h)
+  .attr("scale", scale)
+  .attr("pxs", pxs)
+  .attr("x", padding)
+  .attr("y", padding)
+  .attr("title", "ExampleBarChart")
+  .attr("domain_min", 0)
+  .attr("domain_max", 300)
+  .attr("current_width", 0)
+  .attr("max_width", w - (2*padding))
+  .attr("category_height", yPos.rangeBand())
+  .attr("category_label_width", 5*pxs);
 
   // append bar objects to sketch
   var bar = sketch.selectAll("bar").data(bullets);
   bar.enter()
   .append( 'bar' )
   .attr({
-    title: function( d, i ) {
+    category_name: function( d, i ) {
       return d.title;
     },
-    title_width: 5*pxs,
-    x: padding,
-    y: function( d, i ) {
+    y: function ( d, i ) {
       return yPos(i);
     },
-    width: function( d, i ) {
-      return 0;
-    },
-    pxs: pxs * fs,
-    height: yPos.rangeBand(),
-    max_width: w - (2*padding),
-    scale: scale,
-    domain_min: 0,
-    domain_max: 300,
     value: function( d, i ) {
       return d.val;
-    },
-    animate: true
+    }
   })
   .call(addBars);
 
-  bar.transition()
+  sketch.transition()
   .duration(1000)
-  .attr("width", function ( d, i ) {
-    return d.val;
+  .attr("current_width", function ( d, i ) {
+    return 300;
   })
   .each('end', pauseBarUpdate);
 
+  var barChart = null;
+
   // insert bullets into pixi canvas
   function addBars() {
+    console.log("adding bars");
     var root = d3.select("sketch")[0][0];
-    for (var child = root.firstChild; child; child = child.nextSibling) {
-      stage.addChild(new ChartLib.BarChart(child));
-    }
+    barChart = new ChartLib.BarChart(root);
+    stage.addChild(barChart);
   };
 
   function updateBars () {
     var root = d3.select("sketch")[0][0];
-    var i = 0;
-    for (var child = root.firstChild; child; child = child.nextSibling) {
-      if (i < stage.children.length) {
-        var b = stage.children[i];
-        if (b.animate) {
-          b.update(child);
-        }
-      }
-      i++;
+    barChart = stage.children[0];
+    if (barChart && barChart._animate) {
+      barChart.update(root);
     }
   }
 
   function pauseBarUpdate () {
-    for (var i = 0; i < stage.children.length; i++) {
-      stage.children[i].animate = false;
+    barChart = stage.children[0];
+    if (barChart) {
+      barChart._animate = false;
     }
   };
 

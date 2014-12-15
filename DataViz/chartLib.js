@@ -571,7 +571,7 @@ ChartLib.StackedColumnChart = function (element) {
 		// call super init
 		this.initVerticalChart(element);
 
-		// stackedcolumn container
+		// stackedColumn container
 		if (!this.stackedColumnContainer) {
 			this.stackedColumnContainer = new PIXI.DisplayObjectContainer();
 			this.addChild(this.stackedColumnContainer);
@@ -582,7 +582,6 @@ ChartLib.StackedColumnChart = function (element) {
 		this.stackedColumnContainer.removeChildren();
 		for (var child = element.firstChild; child; child = child.nextSibling) {
 			var values = child.getAttribute("values").split(",");
-			var valueLabels = new Array();
 			var values_Sum = values.reduce(function(previousValue, currentValue, index, array) {
 				return previousValue + currentValue;
 			});
@@ -692,7 +691,6 @@ ChartLib.StackedBarChart = function (element) {
 		this.stackedBarContainer.removeChildren();
 		for (var child = element.firstChild; child; child = child.nextSibling) {
 			var values = child.getAttribute("values").split(",");
-			var valueLabels = new Array();
 			var values_Sum = values.reduce(function(previousValue, currentValue, index, array) {
 				return previousValue + currentValue;
 			});
@@ -742,6 +740,41 @@ ChartLib.StackedBarChart.prototype = Object.create( ChartLib.BasicHorizontalChar
 ChartLib.StackedBarChart.prototype.constructor = ChartLib.StackedBarChart;
 
 /**
+* Grouped Column - graphical object
+*/
+
+ChartLib.GroupedColumn = function (x, y, val, width, height, valueLabel, color, pxs) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+
+	this._x = x;
+	this._y = y;
+	this._val = val;
+	this._width = width;
+	this._height = height;
+	this._color = color;
+	this._pxs = pxs;
+
+	this._valueLabel = valueLabel;
+	this.addChild(this._valueLabel);
+
+	// draw simple bar
+	this.draw = function() {
+		this.beginFill(this._color);
+		this.drawRect( this._x, this._y, this._width, -this._height);
+		this.endFill();
+
+		this._valueLabel.position.y = this._y - this._height - 1.3*this._pxs;
+	};
+
+	this.draw();
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.GroupedColumn.prototype = PIXI.Graphics.prototype;
+ChartLib.GroupedColumn.prototype.constructor = ChartLib.GroupedColumn;
+
+/**
 * Grouped Column Chart
 */
 ChartLib.GroupedColumnChart = function (element) {
@@ -753,43 +786,45 @@ ChartLib.GroupedColumnChart = function (element) {
 		// call super init
 		this.initVerticalChart(element);
 
-		// values
-		this._values = element.getAttribute("values").split(",");
-		// category category width
-		this._categoryWidth = this._width / this._values.length;
-		if (!this._valueNodes) {
-			this._valueNodes = new Array();
-			this._values_sum = 0;
-			for (var i=0; i<this._values.length; i++) {
-				var textColor = "black";
-				var valueNode = new PIXI.Text(this._values[i], {font: (this._pxs) + "px arial", fill:textColor});
-				valueNode.position.y = this._targetGraph_y;
-				valueNode.position.x = (this._x + i*this._categoryWidth + (this._categoryWidth/2)) - (valueNode.width / 2);
 
-				// ommit too small column heights, cause text will not fit in properly
-				if (valueNode.width < this._width/this._values[i].length) {
-					this.addChild(valueNode);
-				}
-				this._valueNodes[i] = valueNode;
-				this._values_sum += parseFloat(this._values[i]);
+		// groupedColumn container
+		if (!this.groupedColumnContainer) {
+			this.groupedColumnContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.groupedColumnContainer);
+		}
+
+		// values
+		this._values = new Array();
+		this.groupedColumnContainer.removeChildren();
+		for (var child = element.firstChild; child; child = child.nextSibling) {
+			var values = child.getAttribute("values").split(",");
+			var stackedColumnX = parseFloat(child.getAttribute("x")) * this._scale;
+
+			for (var i=0; i<values.length; i++) {
+				var val = parseFloat(values[i]);
+				var columnWidth = this._categoryWidth/values.length;
+				var columnX = stackedColumnX  + i*columnWidth;
+				var columnHeight = this._axisScale(val);
+				var currentColumnHeight = (val > this._currentHeight)?
+				this._axisScale(this._currentHeight) : columnHeight;
+
+				// value label
+				var columnColor = 0x000000 + i*0x333333;
+				var textColor = "black";
+				var valueLabel = new PIXI.Text(val, {font: (this._pxs) + "px arial", fill:textColor});
+				valueLabel.position.y = this._axis_y - currentColumnHeight - 1.3*this._pxs;
+				valueLabel.position.x = columnX + (columnWidth/2) - (valueLabel.width / 2);
+
+				var groupedColumn = new ChartLib.GroupedColumn(columnX, this._axis_y, val, columnWidth,
+				currentColumnHeight, valueLabel, columnColor, this._pxs);
+
+				this.groupedColumnContainer.addChild(groupedColumn);
 			}
 		}
 	};
 
 	this.draw = function (element) {
-		this.clear();
-
-		// current val
-		var current_width = 0;
-		for (var i=0; i<this._values.length; i++) {
-			this.beginFill(0x000000 + i*0x333333);
-			var relHeight = (this._values[i] / this._values_sum) * this._height;
-			this.drawRect( this._x + current_width, this._targetGraph_y, this._categoryWidth, -this.calc_height(relHeight, this.range));
-			this.endFill();
-
-			this._valueNodes[i].position.y = this._targetGraph_y - this.calc_height(relHeight) - this._valueNodes[i].height - 0.3*this._pxs;
-			current_width += this._categoryWidth;
-		}
+		// axis
 	};
 
 	this.init(element);

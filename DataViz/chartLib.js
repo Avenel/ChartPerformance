@@ -207,10 +207,72 @@ ChartLib.BasicVerticalChart = function (element) {
 ChartLib.BasicVerticalChart.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.BasicVerticalChart.prototype.constructor = ChartLib.BasicVerticalChart;
 
+
+ChartLib.HorizontalTargetGraph = function(x, y, last, current, plan, red, yellow, green, max_width, height, valueLabel, pxs) {
+
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+
+	this._x = x;
+	this._y = y;
+	this._last = last;
+	this._current = current;
+	this._plan = plan;
+	this._red = red;
+	this._yellow = yellow;
+	this._green = green;
+	this._max_width = max_width;
+	this._height = height;
+
+	this._valueLabel = valueLabel;
+	this.addChild(valueLabel);
+
+	this._pxs = pxs;
+
+	this.draw = function () {
+		this.clear();
+
+		console.log(this);
+
+		// "traffic light" - green
+		this.beginFill(0xEFEFEF);
+		this.drawRect( this._x, this._y, this._max_width, this._height);
+
+		// "traffic light" - yellow
+		this.beginFill(0xC3C3C3);
+		this.drawRect( this._x, this._y, this._yellow, this._height);
+
+		// "traffic light" - red
+		this.beginFill(0x999999);
+		this.drawRect( this._x, this._y, this._red, this._height);
+
+		// plan val
+		this.beginFill(0x000000);
+		this.drawRect( this._x + this._plan, this._y + this._height * 0.15, 3, this._height * 0.7);
+
+		// current val
+		this.beginFill(0x000000);
+		this.drawRect( this._x, this._y + (this._height * 0.25), this._current, this._height * 0.5);
+
+		// last val
+		this.beginFill(0x333333);
+		this.drawCircle( this._x + this._last, this._y + (this._height/2), this._height * 0.3);
+
+		this.endFill();
+	}
+
+	this.draw();
+
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.HorizontalTargetGraph.prototype = PIXI.Graphics.prototype;
+ChartLib.HorizontalTargetGraph.prototype.constructor = ChartLib.HorizontalTargetGraph;
+
 /**
-* Horizontal TargetGraph, introduced by Kohlhammer et al.
+* Horizontal TargetGraphChart, introduced by Kohlhammer et al.
 */
-ChartLib.HorizontalTargetGraph = function (element) {
+ChartLib.HorizontalTargetGraphChart = function (element) {
 
 	ChartLib.BasicHorizontalChart.apply(this);
 	this.type = "horizontalTargetGraph";
@@ -219,53 +281,51 @@ ChartLib.HorizontalTargetGraph = function (element) {
 		// call super init
 		this.initHorizontalChart(element);
 
-		// measures = [last, current, plan]
-		this.measures = [ parseFloat(element.getAttribute("val_last")),
-		parseFloat(element.getAttribute("val_current")),
-		parseFloat(element.getAttribute("val_plan")) ];
+		if (!this.horizontalTGContainer) {
+			this.horizontalTGContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.horizontalTGContainer);
+		}
 
-		// traffic light ranges [red, yellow, green]
-		this.tl_range = [ parseFloat(element.getAttribute("range_green")),
-		parseFloat(element.getAttribute("range_yellow")),
-		parseFloat(element.getAttribute("range_red")) ]
+		// values
+		this.horizontalTGContainer.removeChildren();
+		for (var child = element.firstChild; child; child = child.nextSibling) {
+			// measures = [last, current, plan]
+			var measures = [ 	parseFloat(child.getAttribute("val_last")),
+												parseFloat(child.getAttribute("val_current")),
+												parseFloat(child.getAttribute("val_plan")) ];
 
-		// value of current value
-		if (!this._valueNode) {
-			this._valueNode = new PIXI.Text(this.measures[1], {font: (this._pxs ) + "px arial", fill:"black"});
-			this._valueNode.position.x = this._targetGraph_x + this.calc_width(this.domain_max) + 0.3 * this._pxs;
-			this._valueNode.position.y = (this._y + (this._height/2)) - (this._valueNode.height / 2);
-			this._categoryLabelContainer.addChild(this._valueNode);
+			// traffic light ranges [red, yellow, green]
+			var tl_range = [ parseFloat(child.getAttribute("range_green")),
+												parseFloat(child.getAttribute("range_yellow")),
+												parseFloat(child.getAttribute("range_red")) ]
+
+			var barWidth = this._axisScale(measures[1]);
+			var barY = parseFloat(child.getAttribute("y")) * this._scale;
+			var currentBarWidth = (measures[1] > this._currentWidth)? this._axisScale(this._currentWidth) : barWidth;
+
+			// value label
+			var valueLabel = new PIXI.Text(measures[1], {font: (this._pxs ) + "px arial", fill:"black"});
+			valueLabel.position.x = this._max_width + 0.3*this._pxs;
+			valueLabel.position.y = (barY + (this._categoryHeight/2)) - (valueLabel.height / 2);
+
+			// create TG
+			console.log(tl_range);
+
+			var last = this._axisScale(measures[0]);
+			var current = this._axisScale(measures[1]);
+			var plan = this._axisScale(measures[2]);
+			var red = this._axisScale(tl_range[0]);
+			var yellow = this._axisScale(tl_range[1]);
+			var green = this._axisScale(tl_range[2]);
+			// x, y, last, current, plan, green, yellow, red, max_width, height, valueLabel, pxs
+			var horizontalTG = new ChartLib.HorizontalTargetGraph(this._axis_x, barY, last, current, plan,
+															red, yellow, green, this._domain[1], this._categoryHeight, valueLabel, this._pxs);
+			this.horizontalTGContainer.addChild(horizontalTG);
 		}
 	};
 
 	this.draw = function () {
-		this.clear();
-
-		// "traffic light" - green
-		this.beginFill(0xEFEFEF);
-		this.drawRect( this._targetGraph_x, this._y, this.calc_width(this.domain_max), this._height);
-
-		// "traffic light" - yellow
-		this.beginFill(0xC3C3C3);
-		this.drawRect( this._targetGraph_x, this._y, this.calc_width(this.tl_range[1]), this._height);
-
-		// "traffic light" - red
-		this.beginFill(0x999999);
-		this.drawRect( this._targetGraph_x, this._y, this.calc_width(this.tl_range[2]), this._height);
-
-		// plan val
-		this.beginFill(0x000000);
-		this.drawRect( this._targetGraph_x + this.calc_width(this.measures[2], this.range), this._y + this._height * 0.15, 3, this._height * 0.7);
-
-		// current val
-		this.beginFill(0x000000);
-		this.drawRect( this._targetGraph_x, this._y + (this._height * 0.25), this.calc_width(this._width, this.range), this._height * 0.5);
-
-		// last val
-		this.beginFill(0x333333);
-		this.drawCircle( this._targetGraph_x + this.calc_width(this.measures[0], this.range), this._y + (this._height/2), this._height * 0.3);
-
-		this.endFill();
+		// axis
 	};
 
 	this.init(element);
@@ -273,8 +333,8 @@ ChartLib.HorizontalTargetGraph = function (element) {
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.HorizontalTargetGraph.prototype = Object.create( ChartLib.BasicHorizontalChart.prototype );
-ChartLib.HorizontalTargetGraph.prototype.constructor = ChartLib.HorizontalTargetGraph;
+ChartLib.HorizontalTargetGraphChart.prototype = Object.create( ChartLib.BasicHorizontalChart.prototype );
+ChartLib.HorizontalTargetGraphChart.prototype.constructor = ChartLib.HorizontalTargetGraphChart;
 
 
 /**
@@ -345,7 +405,6 @@ ChartLib.VerticalTargetGraph = function (element) {
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.VerticalTargetGraph.prototype = Object.create( ChartLib.BasicVerticalChart.prototype );
 ChartLib.VerticalTargetGraph.prototype.constructor = ChartLib.VerticalTargetGraph;
-
 
 
 /**

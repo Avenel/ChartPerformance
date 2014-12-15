@@ -55,48 +55,39 @@
   d3.select("body").append("custom:renderer")
   .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
 
-
-  // container element for bulletGraphics
-  var graphics = new Array();
-
-  // indicates if animation should be active or not (one should not animate, if the viz is already static)
-  var global_animate = true
-
-  // add render view to DOM
-  document.body.appendChild(renderer.view);
+  // calculate yPosition of bullet
+  var yPos = d3.scale.ordinal()
+    .domain( d3.range( bullets.length ) )
+    .rangeRoundBands( [0, h - (2*padding)], 1/3); // IBCS: category width = 1.8fs -> Space = 1/3 * 1.8fs
 
   // Add our "custom" sketch element to the body.
   var sketch = d3.select("body").append("cxustom:sketch")
   .attr("width", w)
-  .attr("height", h);
+  .attr("height", h)
+  .attr("scale", scale)
+  .attr("pxs", pxs)
+  .attr("x", padding)
+  .attr("y", padding)
+  .attr("title", "ExampleBarChart")
+  .attr("domain_min", 0)
+  .attr("domain_max", 300)
+  .attr("current_width", 0)
+  .attr("max_width", w - (2*padding))
+  .attr("category_height", yPos.rangeBand())
+  .attr("category_label_width", 5*pxs);
 
-  // calculate yPosition of bullet
-  var yPos = d3.scale.ordinal()
-  .domain( d3.range( bullets.length ) )
-  .rangeRoundBands( [0, h - (2*padding)], 1/3); // IBCS: category width = 1.8fs -> Space = 1/3 * 1.8fs
 
   // append bullet objects to sketch
   var bullet = sketch.selectAll("bullet").data(bullets);
   bullet.enter()
   .append( 'bullet' )
   .attr({
-    title: function( d, i ) {
+    category_name: function( d, i ) {
       return d.title;
     },
-    title_width: 5*pxs,
-    x: padding,
     y: function( d, i ) {
       return yPos(i);
     },
-    width: function( d, i ) {
-      return 0;
-    },
-    pxs: fs * pxs,
-    height: yPos.rangeBand(),
-    max_width: w - (2*padding),
-    scale: scale,
-    domain_min: 0,
-    domain_max: 300,
     val_current: function( d, i ) {
       return d.measures[0];
     },
@@ -114,43 +105,38 @@
     },
     range_green: function ( d, i ) {
       return d.ranges[2];
-    },
-    animate: true
+    }
   })
   .call(addBullets);
 
-  bullet.transition()
+  sketch.transition()
   .duration(1000)
-  .attr("width", function ( d, i ) {
-    return d.measures[0];
+  .attr("current_width", function ( d, i ) {
+    return 300;
   })
   .each('end', pauseBulletUpdate);
+
+  var horizontalTGChart = null;
 
   // insert bullets into pixi canvas
   function addBullets() {
     var root = d3.select("sketch")[0][0];
-    for (var child = root.firstChild; child; child = child.nextSibling) {
-      stage.addChild(new ChartLib.HorizontalTargetGraph(child));
-    }
+    horizontalTGChart = new ChartLib.HorizontalTargetGraphChart(root);
+    stage.addChild(horizontalTGChart);
   };
 
   function updateBullets () {
     var root = d3.select("sketch")[0][0];
-    var i = 0;
-    for (var child = root.firstChild; child; child = child.nextSibling) {
-      if (i < stage.children.length) {
-        var b = stage.children[i];
-        if (b.animate) {
-          b.update(child);
-        }
-      }
-      i++;
+    horizontalTGChart = stage.children[0];
+    if (horizontalTGChart && horizontalTGChart._animate) {
+      horizontalTGChart.update(root);
     }
   }
 
   function pauseBulletUpdate () {
-    for (var i = 0; i < stage.children.length; i++) {
-      stage.children[i].animate = false;
+    horizontalTGChart = stage.children[0];
+    if (horizontalTGChart) {
+      horizontalTGChart._animate = false;
     }
   };
 

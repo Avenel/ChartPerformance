@@ -19,7 +19,7 @@
   <canvas id="chart"></canvas>
   <script>
   // data
-  var bullets =
+  var data =
   [
   {"title":"Germany", "val":220},
   {"title":"France",  "val":180},
@@ -39,7 +39,7 @@
   pxs = 16,
   category_w = 1.8,
   w = Math.floor(20*pxs*fs), // 1.8fs = recommended category width
-  h = Math.floor(bullets.length*pxs*fs*category_w),
+  h = Math.floor(data.length*pxs*fs*category_w),
   padding = Math.floor(1*pxs*fs);
 
   var canvas = document.getElementById('chart');
@@ -57,7 +57,7 @@
 
   // calculate yPosition of bullet
   var yPos = d3.scale.ordinal()
-  .domain( d3.range( bullets.length ) )
+  .domain( d3.range( data.length ) )
   .rangeRoundBands( [0, h - (2*padding)], 1/3); // IBCS: category width = 1.8fs -> Space = 1/3 * 1.8fs
 
 
@@ -78,7 +78,7 @@
   .attr("category_label_width", 5*pxs);
 
   // append bar objects to sketch
-  var bar = sketch.selectAll("bar").data(bullets);
+  var bar = sketch.selectAll("bar").data(data);
   bar.enter()
   .append( 'bar' )
   .attr({

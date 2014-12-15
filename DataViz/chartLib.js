@@ -398,7 +398,7 @@ ChartLib.BarChart = function (element) {
 			this.addChild(this.barContainer);
 		}
 
-		// value of current value
+		// values
 		this.values = new Array();
 		this.barContainer.removeChildren();
 		for (var child = element.firstChild; child; child = child.nextSibling) {
@@ -444,13 +444,31 @@ ChartLib.ColumnChart = function (element) {
 		// call super init
 		this.initVerticalChart(element);
 
-		// value of current value
-		this._value = parseFloat(element.getAttribute("value"));
-		if (!this._valueNode) {
-			this._valueNode = new PIXI.Text(this._value, {font: (this._pxs) + "px arial", fill:"black"});
-			this._valueNode.position.y = this._targetGraph_y - this.calc_height(this._height) - 1.3*this._pxs;
-			this._valueNode.position.x = (this._x + (this._width/2)) - (this._valueNode.width / 2);
-			this.addChild(this._valueNode);
+		// column container
+		if (!this.columnContainer) {
+			this.columnContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.columnContainer);
+		}
+
+		// values
+		this.values = new Array();
+		this.columnContainer.removeChildren();
+		for (var child = element.firstChild; child; child = child.nextSibling) {
+			var val = parseFloat(child.getAttribute("value"));
+
+			// value label
+			var columnHeight = this._axisScale(val);
+			var barX = parseFloat(child.getAttribute("x")) * this._scale;
+			var currentColumnHeight = (val > this._currentHeight)? this._axisScale(this._currentHeight) : columnHeight;
+
+			var valueLabel = new PIXI.Text(val, {font: (this._pxs ) + "px arial", fill:"black"});
+			valueLabel.position.x = this._axis_y + columnHeight + 0.3*this._pxs;
+			valueLabel.position.y = (barY + (this._categoryHeight/2)) - (valueLabel.height / 2);
+
+			var bar = new ChartLib.Bar(this._axis_x, barY, val, currentBarWidth, this._categoryHeight, valueLabel, 0x000000, this._pxs);
+			this.barContainer.addChild(bar)
+
+			this.values[this.values.length] = val;
 		}
 	}
 

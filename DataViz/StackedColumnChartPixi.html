@@ -64,78 +64,72 @@
   // add render view to DOM
   document.body.appendChild(renderer.view);
 
-  // Add our "custom" sketch element to the body.
-  var sketch = d3.select("body").append("cxustom:sketch")
-  .attr("width", w)
-  .attr("height", h);
-
   // calculate yPosition of bullet
   var xPos = d3.scale.ordinal()
   .domain( d3.range( data.length ) )
   .rangeRoundBands( [0, w - (2*padding)], 1/3);
 
+  // Add our "custom" sketch element to the body.
+  var sketch = d3.select("body").append("cxustom:sketch")
+  .attr("width", w)
+  .attr("height", h)
+  .attr("scale", scale)
+  .attr("pxs", pxs)
+  .attr("x", padding)
+  .attr("y", h-padding)
+  .attr("title", "ExampleColumnChart")
+  .attr("domain_min", 0)
+  .attr("domain_max", 400)
+  .attr("current_height", 0)
+  .attr("max_height", h - (2*padding))
+  .attr("category_width", xPos.rangeBand())
+  .attr("category_label_width", xPos.rangeBand());
+
   // append bar objects to sketch
-  var column = sketch.selectAll("stackedColumn").data(data);
-  column.enter()
+  var stackedColumn = sketch.selectAll("stackedColumn").data(data);
+  stackedColumn.enter()
   .append( 'stackedColumn' )
   .attr({
-    title: function( d, i ) {
+    category_name: function( d, i ) {
       return d.title;
     },
-    title_width: 5*pxs,
-    x: function( d, i ) {
+    x: function ( d, i ) {
       return xPos(i);
     },
-    y: h - padding,
-    width: xPos.rangeBand(),
-    pxs: pxs * fs,
-    height: 0,
-    max_height: h - (2*padding),
-    scale: scale,
-    domain_min: 0,
-    domain_max: 400,
     values: function( d, i ) {
       return d.values;
-    },
-    animate: true
+    }
   })
   .call(addStackedColumns);
 
-  column.transition()
+  sketch.transition()
   .duration(1000)
-  .attr("height", function ( d, i ) {
-    // sum of values
-    return d.values.reduce(function(previousValue, currentValue, index, array) {
-      return previousValue + currentValue;
-    });;
+  .attr("current_height", function ( d, i ) {
+    return 400;
   })
   .each('end', pauseStackedColumnUpdate);
+
+  var stackedColumnChart = null;
 
   // insert columns into pixi canvas
   function addStackedColumns() {
     var root = d3.select("sketch")[0][0];
-    for (var child = root.firstChild; child; child = child.nextSibling) {
-      stage.addChild(new ChartLib.StackedColumnChart(child));
-    }
+    stackedColumnChart = new ChartLib.StackedColumnChart(root);
+    stage.addChild(stackedColumnChart);
   };
 
   function updateStackedColumns () {
     var root = d3.select("sketch")[0][0];
-    var i = 0;
-    for (var child = root.firstChild; child; child = child.nextSibling) {
-      if (i < stage.children.length) {
-        var b = stage.children[i];
-        if (b.animate) {
-          b.update(child);
-        }
-      }
-      i++;
+    stackedColumnChart = stage.children[0];
+    if (stackedColumnChart && stackedColumnChart._animate) {
+      stackedColumnChart.update(root);
     }
   }
 
   function pauseStackedColumnUpdate () {
-    for (var i = 0; i < stage.children.length; i++) {
-      stage.children[i].animate = false;
+    stackedColumnChart = stage.children[0];
+    if (stackedColumnChart) {
+      stackedColumnChart._animate = false;
     }
   };
 

@@ -54,9 +54,6 @@ ChartLib.BasicChart = function(element) {
 		this._domain_max = parseFloat(element.getAttribute("domain_max"));
 		this._domain = [this._domain_min, this._domain_max];
 
-		// set animate to true, because there is new data in town!
-		this._animate = true;
-
 		// add container for category labels
 		this._categoryLabelContainer = new PIXI.DisplayObjectContainer();
 		this.addChild(this._categoryLabelContainer);
@@ -72,10 +69,17 @@ ChartLib.BasicChart.prototype.constructor = ChartLib.BasicChart;
 * Update values and redraw.
 */
 ChartLib.BasicChart.prototype.update = function (element) {
-	this._animate = true;
 	this.init(element);
 	this.draw();
 };
+
+/**
+* Toogle Animation on and off, render one more time.
+*/
+ChartLib.BasicChart.prototype.toggleAnimate = function () {
+	this._animate = !this._animate;
+	this.update(this._element);
+}
 
 /**
 * Draw method each chart should override.
@@ -511,7 +515,9 @@ ChartLib.Bar = function (x, y, val, width, height, valueLabel, color, pxs, textP
 	this._textPos = textPos;
 
 	this._valueLabel = valueLabel;
+	this._valueLabel.visible = false;
 	this.addChild(this._valueLabel);
+
 
 	// draw simple bar
 	this.draw = function() {
@@ -526,7 +532,6 @@ ChartLib.Bar = function (x, y, val, width, height, valueLabel, color, pxs, textP
 		if (this._textPos == TextPositionEnum.INNER) {
 			// ommit too small widths
 			if (this._valueLabel.width < this._width - 0.5*this._pxs) {
-				this._valueLabel.visible = true;
 				this._valueLabel.position.x = this._x + (this._width / 2) - this._valueLabel.width/2;
 			} else {
 				this._valueLabel.visible = false;
@@ -534,8 +539,9 @@ ChartLib.Bar = function (x, y, val, width, height, valueLabel, color, pxs, textP
 		}
 	};
 
-	this.update = function (width) {
+	this.update = function (width, showText) {
 		this._width = width;
+		this._valueLabel.visible = showText;
 		this.draw();
 	}
 
@@ -592,7 +598,7 @@ ChartLib.BarChart = function (element) {
 			var barY = parseFloat(child.getAttribute("y")) * this._scale;
 			var currentBarWidth = (val > this._currentWidth)? this._axisScale(this._currentWidth) : barWidth;
 
-			this.barContainer.children[i].update(currentBarWidth);
+			this.barContainer.children[i].update(currentBarWidth, !this._animate);
 			i++;
 		}
 	};
@@ -610,7 +616,7 @@ ChartLib.BarChart.prototype.constructor = ChartLib.BarChart;
 * Column - graphical object
 */
 
-ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs, textPos) {
+ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs, textPos, showText) {
 	// inherit Pixi.js Graphics object
 	PIXI.Graphics.apply(this, arguments);
 
@@ -625,6 +631,8 @@ ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs, te
 
 	this._valueLabel = valueLabel;
 	this.addChild(this._valueLabel);
+	this._valueLabel.visible = false;
+
 
 	// draw simple column
 	this.draw = function () {
@@ -633,6 +641,7 @@ ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs, te
 		this.drawRect( this._x, this._y, this._width, -this._height);
 		this.endFill();
 
+
 		if (this._textPos == TextPositionEnum.TOP) {
 			this._valueLabel.position.y = this._y - this._height - 1.3*this._pxs;
 		}
@@ -640,7 +649,6 @@ ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs, te
 		if (this._textPos == TextPositionEnum.INNER) {
 			// ommit to small height
 			if (this._valueLabel.height < this._height - 1*this._pxs) {
-				this._valueLabel.visible = true;
 				this._valueLabel.position.y = this._y - (this._height / 2) - this._valueLabel.height/2;
 			} else {
 				this._valueLabel.visible = false;
@@ -648,8 +656,9 @@ ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs, te
 		}
 	};
 
-	this.update = function (height) {
+	this.update = function (height, showText) {
 		this._height = height;
+		this._valueLabel.visible = showText;
 		this.draw();
 	}
 
@@ -709,7 +718,7 @@ ChartLib.ColumnChart = function (element) {
 			var columnHeight = this._axisScale(val);
 			var currentColumnHeight = (val > this._currentHeight)? this._axisScale(this._currentHeight) : columnHeight;
 
-			this.columnContainer.children[i].update(currentColumnHeight);
+			this.columnContainer.children[i].update(currentColumnHeight, !this._animate);
 			i++;
 		}
 	}
@@ -734,9 +743,9 @@ ChartLib.StackedColumn = function (columns) {
 		this.addChild(columns[i]);
 	}
 
-	this.update = function(heights) {
+	this.update = function(heights, showText) {
 		for (var i=0; i<this.children.length; i++) {
-			this.children[i].update(heights[i]);
+			this.children[i].update(heights[i], showText);
 		}
 	}
 }
@@ -826,7 +835,7 @@ ChartLib.StackedColumnChart = function (element) {
 				heights[j] = currentColumnHeight;
 			}
 
-			this.stackedColumnContainer.children[i].update(heights);
+			this.stackedColumnContainer.children[i].update(heights, !this._animate);
 			i++;
 		}
 	};
@@ -851,9 +860,9 @@ ChartLib.StackedBar = function (bars) {
 		this.addChild(bars[i]);
 	}
 
-	this.update = function(widths) {
+	this.update = function(widths, showText) {
 		for (var i=0; i<this.children.length; i++) {
-			this.children[i].update(widths[i]);
+			this.children[i].update(widths[i], showText);
 		}
 	}
 }
@@ -944,7 +953,7 @@ ChartLib.StackedBarChart = function (element) {
 				widths[j] = currentBarWidth;
 			}
 
-			this.stackedBarContainer.children[i].update(widths);
+			this.stackedBarContainer.children[i].update(widths, !this._animate);
 			i++;
 		}
 	};
@@ -970,9 +979,9 @@ ChartLib.GroupedColumn = function (columns) {
 		this.addChild(columns[i]);
 	}
 
-	this.update = function(heights) {
+	this.update = function(heights, showText) {
 		for (var i=0; i<this.children.length; i++) {
-			this.children[i].update(heights[i]);
+			this.children[i].update(heights[i], showText);
 		}
 	}
 }
@@ -1048,7 +1057,7 @@ ChartLib.GroupedColumnChart = function (element) {
 				heights[j] = currentColumnHeight;
 			}
 
-			this.groupedColumnContainer.children[i].update(heights);
+			this.groupedColumnContainer.children[i].update(heights, !this._animate);
 			i++;
 		}
 	};
@@ -1074,9 +1083,9 @@ ChartLib.GroupedBar = function (bars) {
 		this.addChild(bars[i]);
 	}
 
-	this.update = function(widths) {
+	this.update = function(widths, showText) {
 		for (var i=0; i<this.children.length; i++) {
-			this.children[i].update(widths[i]);
+			this.children[i].update(widths[i], showText);
 		}
 	}
 }
@@ -1155,7 +1164,7 @@ ChartLib.GroupedBarChart = function (element) {
 				widths[j] = currentBarWidth;
 			}
 
-			this.groupedBarContainer.children[i].update(widths);
+			this.groupedBarContainer.children[i].update(widths, !this._animate);
 			i++;
 		}
 	};

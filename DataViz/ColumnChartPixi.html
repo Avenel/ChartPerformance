@@ -12,7 +12,7 @@
   <script src="d3.v3.min.js"></script>
   <script src="pixi.dev.js"></script>
   <script src="chartLib.js"></script>
-  <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script>
+  <!-- <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script> -->
 
 </head>
 <body>
@@ -121,7 +121,7 @@
   function pauseColumnUpdate () {
     columnChart = stage.children[0];
     if (columnChart) {
-      columnChart._animate = false;
+      columnChart.toggleAnimate();
     }
   };
 

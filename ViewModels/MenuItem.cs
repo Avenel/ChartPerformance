@@ -38,6 +38,8 @@ namespace ChartPerformance.ViewModels
     public class GroupedColumnChartPixiMenuItem : MenuItem {
     }
 
+    public class GroupedBarChartPixiMenuItem : MenuItem {
+    }
 }
 
 

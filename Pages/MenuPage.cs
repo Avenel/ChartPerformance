@@ -54,6 +54,7 @@ namespace ChartPerformance.Pages
             MenuItems.Add(new StackedBarChartPixiMenuItem());
             MenuItems.Add(new StackedColumnChartPixiMenuItem());
             MenuItems.Add(new GroupedColumnChartPixiMenuItem());
+            MenuItems.Add(new GroupedBarChartPixiMenuItem());
 
             Menu = new ListView {
                 ItemsSource = MenuItems,

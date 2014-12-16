@@ -266,10 +266,14 @@ ChartLib.HorizontalTargetGraph = function(x, y, last, current, plan, red, yellow
 		this.drawCircle( this._x + this._last, this._y + (this._height/2), this._height * 0.4);
 
 		this.endFill();
-	}
+	};
 
-	this.draw();
+	this.update = function(val_current) {
+		this._current = val_current;
+		this.draw();
+	};
 
+	this.update(current);
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
@@ -291,46 +295,56 @@ ChartLib.HorizontalTargetGraphChart = function (element) {
 		if (!this.horizontalTGContainer) {
 			this.horizontalTGContainer = new PIXI.DisplayObjectContainer();
 			this.addChild(this.horizontalTGContainer);
-		}
 
-		// values
-		this.horizontalTGContainer.removeChildren();
-		for (var child = element.firstChild; child; child = child.nextSibling) {
-			// measures = [last, current, plan]
-			var measures = [ 	parseFloat(child.getAttribute("val_last")),
-												parseFloat(child.getAttribute("val_current")),
-												parseFloat(child.getAttribute("val_plan")) ];
 
-			// traffic light ranges [red, yellow, green]
-			var tl_range = [ parseFloat(child.getAttribute("range_red")),
-												parseFloat(child.getAttribute("range_yellow")),
-												parseFloat(child.getAttribute("range_green")) ]
+			// values
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				// measures = [last, current, plan]
+				var measures = [ 	parseFloat(child.getAttribute("val_last")),
+													parseFloat(child.getAttribute("val_current")),
+													parseFloat(child.getAttribute("val_plan")) ];
 
-			var barWidth = this._axisScale(measures[1]);
-			var barY = parseFloat(child.getAttribute("y")) * this._scale;
-			var currentBarWidth = (measures[1] > this._currentWidth)? this._axisScale(this._currentWidth) : barWidth;
+				// traffic light ranges [red, yellow, green]
+				var tl_range = [ parseFloat(child.getAttribute("range_red")),
+													parseFloat(child.getAttribute("range_yellow")),
+													parseFloat(child.getAttribute("range_green")) ]
 
-			// value label
-			var valueLabel = new PIXI.Text(measures[1], {font: (this._pxs ) + "px arial", fill:"black"});
-			valueLabel.position.x = this._axis_x + this._axisScale(this._domain[1]) + 0.3*this._pxs;
-			valueLabel.position.y = (barY + (this._categoryHeight/2)) - (valueLabel.height / 2);
+				var barWidth = this._axisScale(measures[1]);
+				var barY = parseFloat(child.getAttribute("y")) * this._scale;
+				var currentBarWidth = (measures[1] > this._currentWidth)? this._axisScale(this._currentWidth) : barWidth;
 
-			// create TG
-			var last = this._axisScale(measures[0]);
-			var current = this._axisScale(measures[1]);
-			var plan = this._axisScale(measures[2]);
-			var red = this._axisScale(tl_range[0]);
-			var yellow = this._axisScale(tl_range[1]);
-			var green = this._axisScale(tl_range[2]);
-			// x, y, last, current, plan, green, yellow, red, max_width, height, valueLabel, pxs
-			var horizontalTG = new ChartLib.HorizontalTargetGraph(this._axis_x, barY, last, currentBarWidth, plan,
-															red, yellow, green, this._axisScale(this._domain[1]), this._categoryHeight, valueLabel, this._pxs);
-			this.horizontalTGContainer.addChild(horizontalTG);
+				// value label
+				var valueLabel = new PIXI.Text(measures[1], {font: (this._pxs ) + "px arial", fill:"black"});
+				valueLabel.position.x = this._axis_x + this._axisScale(this._domain[1]) + 0.3*this._pxs;
+				valueLabel.position.y = (barY + (this._categoryHeight/2)) - (valueLabel.height / 2);
+
+				// create TG
+				var last = this._axisScale(measures[0]);
+				var current = this._axisScale(measures[1]);
+				var plan = this._axisScale(measures[2]);
+				var red = this._axisScale(tl_range[0]);
+				var yellow = this._axisScale(tl_range[1]);
+				var green = this._axisScale(tl_range[2]);
+				// x, y, last, current, plan, green, yellow, red, max_width, height, valueLabel, pxs
+				var horizontalTG = new ChartLib.HorizontalTargetGraph(this._axis_x, barY, last, currentBarWidth, plan,
+																red, yellow, green, this._axisScale(this._domain[1]), this._categoryHeight, valueLabel, this._pxs);
+				this.horizontalTGContainer.addChild(horizontalTG);
+			}
 		}
 	};
 
 	this.draw = function () {
-		// axis
+		// update TG
+		var i=0;
+		for (var child = this._element.firstChild; child; child = child.nextSibling) {
+			var val_current = parseFloat(child.getAttribute("val_current"));
+			var barWidth = this._axisScale(val_current);
+			var currentBarWidth = (val_current > this._currentWidth)? this._axisScale(this._currentWidth) : barWidth;
+
+
+			this.horizontalTGContainer.children[i].update(currentBarWidth);
+			i++;
+		}
 	};
 
 	this.init(element);
@@ -393,10 +407,14 @@ ChartLib.VerticalTargetGraph = function(x, y, last, current, plan, red, yellow, 
 		this.drawCircle( this._x + (this._width/2), this._y - this._last, this._width * 0.3);
 
 		this.endFill();
-	}
+	};
 
-	this.draw();
+	this.update = function(val_current) {
+		this._current = val_current;
+		this.draw();
+	};
 
+	this.update(current);
 }
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.VerticalTargetGraph.prototype = PIXI.Graphics.prototype;
@@ -417,46 +435,54 @@ ChartLib.VerticalTargetGraphChart = function (element) {
 		if (!this.verticalTGContainer) {
 			this.verticalTGContainer = new PIXI.DisplayObjectContainer();
 			this.addChild(this.verticalTGContainer);
-		}
 
-		// values
-		this.verticalTGContainer.removeChildren();
-		for (var child = element.firstChild; child; child = child.nextSibling) {
-			// measures = [last, current, plan]
-			var measures = [ 	parseFloat(child.getAttribute("val_last")),
-			parseFloat(child.getAttribute("val_current")),
-			parseFloat(child.getAttribute("val_plan")) ];
+			// values
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				// measures = [last, current, plan]
+				var measures = [ 	parseFloat(child.getAttribute("val_last")),
+				parseFloat(child.getAttribute("val_current")),
+				parseFloat(child.getAttribute("val_plan")) ];
 
-			// traffic light ranges [red, yellow, green]
-			var tl_range = [ parseFloat(child.getAttribute("range_red")),
-			parseFloat(child.getAttribute("range_yellow")),
-			parseFloat(child.getAttribute("range_green")) ]
+				// traffic light ranges [red, yellow, green]
+				var tl_range = [ parseFloat(child.getAttribute("range_red")),
+				parseFloat(child.getAttribute("range_yellow")),
+				parseFloat(child.getAttribute("range_green")) ]
 
-			var columnHeight = this._axisScale(measures[1]);
-			var columnX = parseFloat(child.getAttribute("x")) * this._scale;
-			var currentColumnHeight = (measures[1] > this._currentHeight)? this._axisScale(this._currentHeight) : columnHeight;
+				var columnHeight = this._axisScale(measures[1]);
+				var columnX = parseFloat(child.getAttribute("x")) * this._scale;
+				var currentColumnHeight = (measures[1] > this._currentHeight)? this._axisScale(this._currentHeight) : columnHeight;
 
-			// value label
-			var valueLabel = new PIXI.Text(measures[1], {font: (this._pxs ) + "px arial", fill:"black"});
-			valueLabel.position.y = 0.3*this._pxs;
-			valueLabel.position.x = (columnX + (this._categoryWidth/2)) - (valueLabel.width / 2);
+				// value label
+				var valueLabel = new PIXI.Text(measures[1], {font: (this._pxs ) + "px arial", fill:"black"});
+				valueLabel.position.y = 0.3*this._pxs;
+				valueLabel.position.x = (columnX + (this._categoryWidth/2)) - (valueLabel.width / 2);
 
-			// create TG
-			var last = this._axisScale(measures[0]);
-			var current = this._axisScale(measures[1]);
-			var plan = this._axisScale(measures[2]);
-			var red = this._axisScale(tl_range[0]);
-			var yellow = this._axisScale(tl_range[1]);
-			var green = this._axisScale(tl_range[2]);
+				// create TG
+				var last = this._axisScale(measures[0]);
+				var current = this._axisScale(measures[1]);
+				var plan = this._axisScale(measures[2]);
+				var red = this._axisScale(tl_range[0]);
+				var yellow = this._axisScale(tl_range[1]);
+				var green = this._axisScale(tl_range[2]);
 
-			var verticalTG = new ChartLib.VerticalTargetGraph(columnX, this._axis_y, last, currentColumnHeight, plan,
-				red, yellow, green, this._axisScale(this._domain[1]), this._categoryWidth, valueLabel, this._pxs);
-				this.verticalTGContainer.addChild(verticalTG);
+				var verticalTG = new ChartLib.VerticalTargetGraph(columnX, this._axis_y, last, currentColumnHeight, plan,
+					red, yellow, green, this._axisScale(this._domain[1]), this._categoryWidth, valueLabel, this._pxs);
+					this.verticalTGContainer.addChild(verticalTG);
 			}
-		};
+		}
+	};
 
 	this.draw = function () {
-		// axis
+		// update TGs
+		var i=0;
+		for (var child = this._element.firstChild; child; child = child.nextSibling) {
+			var current_val = parseFloat(child.getAttribute("val_current"));
+			var columnHeight = this._axisScale(current_val);
+			var currentColumnHeight = (current_val > this._currentHeight)? this._axisScale(this._currentHeight) : columnHeight;
+
+			this.verticalTGContainer.children[i].update(currentColumnHeight);
+			i++;
+		}
 	};
 
 	this.init(element);

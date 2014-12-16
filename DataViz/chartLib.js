@@ -595,7 +595,6 @@ ChartLib.BarChart = function (element) {
 		for (var child = this._element.firstChild; child; child = child.nextSibling) {
 			var val = parseFloat(child.getAttribute("value"));
 			var barWidth = this._axisScale(val);
-			var barY = parseFloat(child.getAttribute("y")) * this._scale;
 			var currentBarWidth = (val > this._currentWidth)? this._axisScale(this._currentWidth) : barWidth;
 
 			this.barContainer.children[i].update(currentBarWidth, !this._animate);
@@ -616,7 +615,7 @@ ChartLib.BarChart.prototype.constructor = ChartLib.BarChart;
 * Column - graphical object
 */
 
-ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs, textPos, showText) {
+ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs, textPos) {
 	// inherit Pixi.js Graphics object
 	PIXI.Graphics.apply(this, arguments);
 
@@ -1176,3 +1175,128 @@ ChartLib.GroupedBarChart = function (element) {
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.GroupedBarChart.prototype = Object.create( ChartLib.BasicHorizontalChart.prototype );
 ChartLib.GroupedBarChart.prototype.constructor = ChartLib.GroupedBarChart;
+
+/**
+* Horizontal Pin -- graphical
+*/
+ChartLib.HorizontalPin = function (x, y, val, width, valueLabel, pxs) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+
+
+	this._x = x;
+	this._y = y;
+	this._val = val;
+	this._width = width;
+	this._height = 0.3*pxs;
+	this._pxs = pxs;
+
+	this._color = (val < 0)? 0xFF0000 : 0x8CB400;
+	this._textPos = (val < 0)? TextPositionEnum.LEFT : TextPositionEnum.RIGHT;
+
+	this._valueLabel = valueLabel;
+	this.addChild(this._valueLabel);
+
+
+	this.draw = function () {
+		this.clear();
+
+		// pin
+		this.beginFill(this._color);
+		this.drawRect( this._x, this._y, this._width, this._height);
+		this.endFill();
+
+		// marker
+		this.beginFill(0x000000);
+		this.drawRect( this._x + this._width, this._y - 0.175*this._pxs, 0.7*this._pxs, 0.7*this._pxs);
+		this.endFill();
+
+		if (this._textPos == TextPositionEnum.LEFT) {
+			this._valueLabel.position.x = this._x + this._width - this._valueLabel.width - 0.3*this._pxs;
+		}
+
+		if (this._textPos == TextPositionEnum.RIGHT) {
+			this._valueLabel.position.x = this._x + this._width + 1.3*this._pxs;
+		}
+	}
+
+	this.update = function (width, val, showText) {
+		this._width = width;
+		this._val = val;
+		this._color = (val < 0)? 0xFF0000 : 0x8CB400;
+		this._textPos = (val < 0)? TextPositionEnum.LEFT : TextPositionEnum.RIGHT;
+		this._valueLabel.visible = showText;
+		this.draw();
+	}
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.HorizontalPin.prototype = PIXI.Graphics.prototype;
+ChartLib.HorizontalPin.prototype.constructor = ChartLib.HorizontalPin;
+
+ChartLib.HorizontalPinChart = function (element) {
+	ChartLib.BasicHorizontalChart.apply(this);
+	this.type = "horizontalPinChart";
+
+	this.init = function (element) {
+		// call super init
+		this.initHorizontalChart(element);
+
+		// calc x pos for chart axis (center)
+		this._max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 10*this._pxs;
+		this._axis_x = this._x + this._max_width / 2 + 5*this._pxs;
+
+		// calc axis
+		this._range = [0, this._max_width];
+		this._axisScale = d3.scale.linear()
+			.domain(this._domain)
+			.range( this._range);
+
+		// first we dont need category labels
+		this._categoryLabelContainer.removeChildren();
+
+		// horizontalPins container
+		if (!this.horizontalPinsContainer) {
+			this.horizontalPinsContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.horizontalPinsContainer);
+
+			// values
+			this._values = new Array();
+
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				// value label
+				var val = parseFloat(child.getAttribute("value"));
+				var pinWidth = this._axisScale(val);
+				var pinY = parseFloat(child.getAttribute("y")) * this._scale;
+				var currentPinWidth = (Math.abs(val) > this._currentWidth)? this._axisScale((val / Math.abs(val)) * this._currentWidth) : pinWidth;
+
+				var valueLabel = new PIXI.Text(val, {font: (this._pxs ) + "px arial", fill:"black"});
+				valueLabel.position.x = this._axis_x;
+				valueLabel.position.y = pinY - 0.375*this._pxs;
+
+				var horizontalPin = new ChartLib.HorizontalPin(this._axis_x, pinY, val, currentPinWidth, valueLabel, this._pxs);
+				this.horizontalPinsContainer.addChild(horizontalPin);
+			}
+		}
+
+	};
+
+	this.draw = function () {
+		var i = 0;
+		for (var child = this._element.firstChild; child; child = child.nextSibling) {
+			var val = parseFloat(child.getAttribute("value"));
+			var pinWidth = this._axisScale(val);
+			var currentPinWidth = (Math.abs(val) > this._currentWidth)? this._axisScale((val / Math.abs(val)) * this._currentWidth) : pinWidth;
+
+			this.horizontalPinsContainer.children[i].update(currentPinWidth, val, !this._animate);
+			i++;
+		}
+	};
+
+	this.init(element);
+	this.draw();
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.HorizontalPinChart.prototype = Object.create( ChartLib.BasicHorizontalChart.prototype );
+ChartLib.HorizontalPinChart.prototype.constructor = ChartLib.HorizontalPinChart;

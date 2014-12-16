@@ -1234,6 +1234,9 @@ ChartLib.HorizontalPin = function (x, y, val, width, valueLabel, pxs) {
 ChartLib.HorizontalPin.prototype = PIXI.Graphics.prototype;
 ChartLib.HorizontalPin.prototype.constructor = ChartLib.HorizontalPin;
 
+/**
+* Horizontal Pin Chart
+*/
 ChartLib.HorizontalPinChart = function (element) {
 	ChartLib.BasicHorizontalChart.apply(this);
 	this.type = "horizontalPinChart";
@@ -1300,3 +1303,133 @@ ChartLib.HorizontalPinChart = function (element) {
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.HorizontalPinChart.prototype = Object.create( ChartLib.BasicHorizontalChart.prototype );
 ChartLib.HorizontalPinChart.prototype.constructor = ChartLib.HorizontalPinChart;
+
+/**
+* Vertical Pin -- graphical
+*/
+ChartLib.VerticalPin = function (x, y, val, height, valueLabel, pxs) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+
+	this._x = x;
+	this._y = y;
+	this._val = val;
+	this._width = 0.3*pxs;
+	this._height = height;
+	this._pxs = pxs;
+
+	this._color = (val < 0)? 0xFF0000 : 0x8CB400;
+	this._textPos = (val < 0)? TextPositionEnum.BOTTOM : TextPositionEnum.TOP;
+
+	this._valueLabel = valueLabel;
+	this.addChild(this._valueLabel);
+
+	console.log(this);
+
+	this.draw = function () {
+		this.clear();
+
+		// pin
+		this.beginFill(this._color);
+		this.drawRect( this._x, this._y, this._width, -this._height);
+		this.endFill();
+
+		// marker
+		this.beginFill(0x000000);
+		this.drawRect( this._x - 0.175*this._pxs, this._y - this._height, 0.7*this._pxs, 0.7*this._pxs);
+		this.endFill();
+
+		if (this._textPos == TextPositionEnum.BOTTOM) {
+			this._valueLabel.position.y = this._y - this._height + 1.0*this._pxs;
+		}
+
+		if (this._textPos == TextPositionEnum.TOP) {
+			this._valueLabel.position.y = this._y - this._height - 1.3*this._pxs;
+		}
+	}
+
+	this.update = function (height, val, showText) {
+		this._height = height;
+		this._val = val;
+		this._color = (val < 0)? 0xFF0000 : 0x8CB400;
+		this._textPos = (val < 0)? TextPositionEnum.BOTTOM : TextPositionEnum.TOP;
+		this._valueLabel.visible = showText;
+		this.draw();
+	}
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.VerticalPin.prototype = PIXI.Graphics.prototype;
+ChartLib.VerticalPin.prototype.constructor = ChartLib.VerticalPin;
+
+/**
+* Vertical Pin Chart
+*/
+ChartLib.VerticalPinChart = function (element) {
+	ChartLib.BasicVerticalChart.apply(this);
+	this.type = "verticalPinChart";
+
+	this.init = function (element) {
+		// call super init
+		this.initVerticalChart(element);
+
+		// calc x pos for chart axis (center)
+		this._max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 4*this._pxs;
+		this._axis_y = this._y + this._max_height / 2 + 2*this._pxs;
+
+		// calc axis
+		this._range = [0, this._max_height];
+		this._axisScale = d3.scale.linear()
+			.domain(this._domain)
+			.range( this._range);
+
+		// first we dont need category labels
+		this._categoryLabelContainer.removeChildren();
+
+		console.log(this);
+
+		// horizontalPins container
+		if (!this.verticalPinsContainer) {
+			this.verticalPinsContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.verticalPinsContainer);
+
+			// values
+			this._values = new Array();
+
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				// value label
+				var val = parseFloat(child.getAttribute("value"));
+				var pinHeight = this._axisScale(val);
+				var pinX = parseFloat(child.getAttribute("x")) * this._scale;
+				var currentPinHeight = (Math.abs(val) > this._currentHeight)? this._axisScale((val / Math.abs(val)) * this._currentHeight) : pinHeight;
+
+				var valueLabel = new PIXI.Text(val, {font: (this._pxs ) + "px arial", fill:"black"});
+				valueLabel.position.x = pinX + 0.175*this._pxs - (valueLabel.width/2);
+				valueLabel.position.y = this._axis_y;
+
+				var verticalPin = new ChartLib.VerticalPin(pinX, this._axis_y, val, currentPinHeight, valueLabel, this._pxs);
+				this.verticalPinsContainer.addChild(verticalPin);
+			}
+		}
+
+	};
+
+	this.draw = function () {
+		var i = 0;
+		for (var child = this._element.firstChild; child; child = child.nextSibling) {
+			var val = parseFloat(child.getAttribute("value"));
+			var pinHeight = this._axisScale(val);
+			var currentPinHeight = (Math.abs(val) > this._currentHeight)? this._axisScale((val / Math.abs(val)) * this._currentHeight) : pinHeight;
+
+			this.verticalPinsContainer.children[i].update(currentPinHeight, val, !this._animate);
+			i++;
+		}
+	};
+
+	this.init(element);
+	this.draw();
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.VerticalPinChart.prototype = Object.create( ChartLib.BasicVerticalChart.prototype );
+ChartLib.VerticalPinChart.prototype.constructor = ChartLib.VerticalPinChart;

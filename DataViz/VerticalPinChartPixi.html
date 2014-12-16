@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <title>Column Chart</title>
+  <title>Vertical Pin Chart</title>
   <style>
   body {
     margin: 0;
@@ -21,10 +21,10 @@
   // data
   var data =
   [
-  {"title":"Q1", "val":220},
-  {"title":"Q2",  "val":180},
-  {"title":"Q3",  "val":40},
-  {"title":"Q4",  "val":80}
+  {"title":"Q1", "val":20},
+  {"title":"Q2",  "val":-5},
+  {"title":"Q3",  "val":-1},
+  {"title":"Q4",  "val":10}
   ]
 
   // create an new instance of a pixi stage
@@ -33,11 +33,11 @@
   // for retina displays its important to consider the devicePixelRatio...
   var scale = window.devicePixelRatio;
   var // 1 fontsize in em for ibcs standard measure
-  fs = 0.75, // 1fs / [em]
+  fs = 1.0, // 1fs / [em]
   // 1em = 16px (default browser value)
   pxs = 16 * fs,
   category_w = 3.8,
-  h = Math.floor(20*pxs),
+  h = Math.floor(10*pxs),
   w = Math.floor(data.length*pxs*category_w),
   padding = Math.floor(1*pxs);
 
@@ -67,19 +67,19 @@
   .attr("scale", scale)
   .attr("pxs", pxs)
   .attr("x", padding)
-  .attr("y", h-padding)
+  .attr("y", padding)
   .attr("title", "ExampleColumnChart")
   .attr("domain_min", 0)
-  .attr("domain_max", 300)
+  .attr("domain_max", 25)
   .attr("current_height", 0)
   .attr("max_height", h - (2*padding))
   .attr("category_width", xPos.rangeBand())
   .attr("category_label_width", xPos.rangeBand());
 
   // append bar objects to sketch
-  var column = sketch.selectAll("column").data(data);
-  column.enter()
-  .append( "column" )
+  var pin = sketch.selectAll("pin").data(data);
+  pin.enter()
+  .append( "pin" )
   .attr({
     category_name: function( d, i ) {
       return d.title;
@@ -91,37 +91,36 @@
       return d.val;
     }
   })
-  .call(addColumns);
+  .call(addPins);
 
   sketch.transition()
   .duration(1000)
   .attr("current_height", function ( d, i ) {
-    return 300;
+    return 25;
   })
-  .each('end', pauseColumnUpdate);
+  .each('end', pausePinUpdate);
 
-  var columnChart = null;
+  var pinChart = null;
 
-  // insert bullets into pixi canvas
-  function addColumns() {
-    console.log("adding columns");
+  // insert pins into pixi canvas
+  function addPins() {
     var root = d3.select("sketch")[0][0];
-    columnChart = new ChartLib.ColumnChart(root);
-    stage.addChild(columnChart);
+    pinChart = new ChartLib.VerticalPinChart(root);
+    stage.addChild(pinChart);
   };
 
-  function updateColumns () {
+  function updatePins () {
     var root = d3.select("sketch")[0][0];
-    columnChart = stage.children[0];
-    if (columnChart && columnChart._animate) {
-      columnChart.update(root);
+    pinChart = stage.children[0];
+    if (pinChart && pinChart._animate) {
+      pinChart.update(root);
     }
   }
 
-  function pauseColumnUpdate () {
-    columnChart = stage.children[0];
-    if (columnChart) {
-      columnChart.toggleAnimate();
+  function pausePinUpdate () {
+    pinChart = stage.children[0];
+    if (pinChart) {
+      pinChart.toggleAnimate();
     }
   };
 
@@ -131,7 +130,7 @@
   renderer.render(stage);
 
   function animate() {
-    updateColumns();
+    updatePins();
     renderer.render(stage);
     requestAnimFrame(animate);
   }

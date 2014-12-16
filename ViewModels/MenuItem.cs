@@ -43,6 +43,9 @@ namespace ChartPerformance.ViewModels
 
     public class HorizontalPinChartPixiMenuItem : MenuItem {
     }
+
+    public class VerticalPinChartPixiMenuItem : MenuItem {
+    }
 }
 
 

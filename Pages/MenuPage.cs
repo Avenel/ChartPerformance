@@ -56,6 +56,7 @@ namespace ChartPerformance.Pages
             MenuItems.Add(new GroupedColumnChartPixiMenuItem());
             MenuItems.Add(new GroupedBarChartPixiMenuItem());
             MenuItems.Add(new HorizontalPinChartPixiMenuItem());
+            MenuItems.Add(new VerticalPinChartPixiMenuItem());
 
             Menu = new ListView {
                 ItemsSource = MenuItems,

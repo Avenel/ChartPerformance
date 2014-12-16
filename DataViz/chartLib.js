@@ -28,7 +28,6 @@ ChartLib.BasicChart = function(element) {
 	this._animate = true;
 
 	this.initDefault = function(element) {
-		console.log("update");
 		this._element = element;
 
 		// device pixel ratio stuff
@@ -192,7 +191,6 @@ ChartLib.BasicVerticalChart = function (element) {
 
 		// calc axis
 		this._range = [0, this._max_height];
-		console.log(this._max_height);
 		this._axisScale = d3.scale.linear()
 			.domain(this._domain)
 			.range( this._range);
@@ -490,7 +488,14 @@ ChartLib.Bar = function (x, y, val, width, height, valueLabel, color, pxs) {
 		this._valueLabel.position.x = this._x + this._width + 0.3*this._pxs;
 	};
 
-	this.draw();
+	this.update = function (width) {
+		this._width = width;
+		this._valueLabel.position.x = this._x + this._width + 0.3*this._pxs;
+
+		this.draw();
+	}
+
+	this.update(this._width);
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
@@ -512,32 +517,40 @@ ChartLib.BarChart = function (element) {
 		if (!this.barContainer) {
 			this.barContainer = new PIXI.DisplayObjectContainer();
 			this.addChild(this.barContainer);
-		}
 
-		// values
-		this.values = new Array();
-		this.barContainer.removeChildren();
-		for (var child = element.firstChild; child; child = child.nextSibling) {
-			var val = parseFloat(child.getAttribute("value"));
+			// values
+			this.values = new Array();
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				var val = parseFloat(child.getAttribute("value"));
 
-			// value label
-			var barWidth = this._axisScale(val);
-			var barY = parseFloat(child.getAttribute("y")) * this._scale;
-			var currentBarWidth = (val > this._currentWidth)? this._axisScale(this._currentWidth) : barWidth;
+				// value label
+				var barWidth = this._axisScale(val);
+				var barY = parseFloat(child.getAttribute("y")) * this._scale;
+				var currentBarWidth = (val > this._currentWidth)? this._axisScale(this._currentWidth) : barWidth;
 
-			var valueLabel = new PIXI.Text(val, {font: (this._pxs ) + "px arial", fill:"black"});
-			valueLabel.position.x = this._axis_x + barWidth + 0.3*this._pxs;
-			valueLabel.position.y = (barY + (this._categoryHeight/2)) - (valueLabel.height / 2);
+				var valueLabel = new PIXI.Text(val, {font: (this._pxs ) + "px arial", fill:"black"});
+				valueLabel.position.x = this._axis_x + barWidth + 0.3*this._pxs;
+				valueLabel.position.y = (barY + (this._categoryHeight/2)) - (valueLabel.height / 2);
 
-			var bar = new ChartLib.Bar(this._axis_x, barY, val, currentBarWidth, this._categoryHeight, valueLabel, 0x000000, this._pxs);
-			this.barContainer.addChild(bar)
+				var bar = new ChartLib.Bar(this._axis_x, barY, val, currentBarWidth, this._categoryHeight, valueLabel, 0x000000, this._pxs);
+				this.barContainer.addChild(bar)
 
-			this.values[this.values.length] = val;
+				this.values[this.values.length] = val;
+			}
 		}
 	};
 
 	this.draw = function () {
-		// draw axis.
+		var i = 0;
+		for (var child = this._element.firstChild; child; child = child.nextSibling) {
+			var val = parseFloat(child.getAttribute("value"));
+			var barWidth = this._axisScale(val);
+			var barY = parseFloat(child.getAttribute("y")) * this._scale;
+			var currentBarWidth = (val > this._currentWidth)? this._axisScale(this._currentWidth) : barWidth;
+
+			this.barContainer.children[i].update(currentBarWidth);
+			i++;
+		}
 	};
 
 	this.init(element);
@@ -568,8 +581,9 @@ ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs) {
 	this._valueLabel = valueLabel;
 	this.addChild(this._valueLabel);
 
-	// draw simple bar
-	this.draw = function() {
+	// draw simple column
+	this.draw = function () {
+		this.clear();
 		this.beginFill(this._color);
 		this.drawRect( this._x, this._y, this._width, -this._height);
 		this.endFill();
@@ -577,7 +591,14 @@ ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs) {
 		this._valueLabel.position.y = this._y - this._height - 1.3*this._pxs;
 	};
 
-	this.draw();
+	this.update = function (height) {
+		this._height = height;
+		this._valueLabel.position.y = this._y - this._height - 1.3*this._pxs;
+
+		this.draw();
+	}
+
+	this.update(this._height);
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
@@ -601,32 +622,41 @@ ChartLib.ColumnChart = function (element) {
 		if (!this.columnContainer) {
 			this.columnContainer = new PIXI.DisplayObjectContainer();
 			this.addChild(this.columnContainer);
-		}
 
-		// values
-		this.values = new Array();
-		this.columnContainer.removeChildren();
-		for (var child = element.firstChild; child; child = child.nextSibling) {
-			var val = parseFloat(child.getAttribute("value"));
+			// values
+			this.values = new Array();
+			// this.columnContainer.removeChildren();
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				var val = parseFloat(child.getAttribute("value"));
 
-			// value label
-			var columnHeight = this._axisScale(val);
-			var columnX = parseFloat(child.getAttribute("x")) * this._scale;
-			var currentColumnHeight = (val > this._currentHeight)? this._axisScale(this._currentHeight) : columnHeight;
+				// value label
+				var columnHeight = this._axisScale(val);
+				var columnX = parseFloat(child.getAttribute("x")) * this._scale;
+				var currentColumnHeight = (val > this._currentHeight)? this._axisScale(this._currentHeight) : columnHeight;
 
-			var valueLabel = new PIXI.Text(val, {font: (this._pxs ) + "px arial", fill:"black"});
-			valueLabel.position.x = columnX + ((this._categoryWidth/2) - (valueLabel.width / 2));
-			valueLabel.position.y = this._axis_y - columnHeight - 0.3*this._pxs;
+				var valueLabel = new PIXI.Text(val, {font: (this._pxs ) + "px arial", fill:"black"});
+				valueLabel.position.x = columnX + ((this._categoryWidth/2) - (valueLabel.width / 2));
+				valueLabel.position.y = this._axis_y - columnHeight - 0.3*this._pxs;
 
-			var column = new ChartLib.Column(columnX, this._axis_y, val, this._categoryWidth, currentColumnHeight, valueLabel, 0x000000, this._pxs);
-			this.columnContainer.addChild(column)
+				var column = new ChartLib.Column(columnX, this._axis_y, val, this._categoryWidth, currentColumnHeight, valueLabel, 0x000000, this._pxs);
+				this.columnContainer.addChild(column)
 
-			this.values[this.values.length] = val;
+				this.values[this.values.length] = val;
+			}
 		}
 	}
 
 	this.draw = function () {
-		// draw axis
+		var i = 0;
+		for (var child = this._element.firstChild; child; child = child.nextSibling) {
+			var val = parseFloat(child.getAttribute("value"));
+			var columnHeight = this._axisScale(val);
+			var columnX = parseFloat(child.getAttribute("x")) * this._scale;
+			var currentColumnHeight = (val > this._currentHeight)? this._axisScale(this._currentHeight) : columnHeight;
+
+			this.columnContainer.children[i].update(currentColumnHeight);
+			i++;
+		}
 	}
 
 	this.init(element);

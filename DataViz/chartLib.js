@@ -232,8 +232,6 @@ ChartLib.HorizontalTargetGraph = function(x, y, last, current, plan, red, yellow
 	this.draw = function () {
 		this.clear();
 
-		console.log(this);
-
 		// "traffic light" - green
 		this.beginFill(0xEFEFEF);
 		this.drawRect( this._x, this._y, this._max_width, this._height);
@@ -256,7 +254,7 @@ ChartLib.HorizontalTargetGraph = function(x, y, last, current, plan, red, yellow
 
 		// last val
 		this.beginFill(0x333333);
-		this.drawCircle( this._x + this._last, this._y + (this._height/2), this._height * 0.3);
+		this.drawCircle( this._x + this._last, this._y + (this._height/2), this._height * 0.4);
 
 		this.endFill();
 	}
@@ -295,9 +293,9 @@ ChartLib.HorizontalTargetGraphChart = function (element) {
 												parseFloat(child.getAttribute("val_plan")) ];
 
 			// traffic light ranges [red, yellow, green]
-			var tl_range = [ parseFloat(child.getAttribute("range_green")),
+			var tl_range = [ parseFloat(child.getAttribute("range_red")),
 												parseFloat(child.getAttribute("range_yellow")),
-												parseFloat(child.getAttribute("range_red")) ]
+												parseFloat(child.getAttribute("range_green")) ]
 
 			var barWidth = this._axisScale(measures[1]);
 			var barY = parseFloat(child.getAttribute("y")) * this._scale;
@@ -305,7 +303,7 @@ ChartLib.HorizontalTargetGraphChart = function (element) {
 
 			// value label
 			var valueLabel = new PIXI.Text(measures[1], {font: (this._pxs ) + "px arial", fill:"black"});
-			valueLabel.position.x = this._max_width + 0.3*this._pxs;
+			valueLabel.position.x = this._max_width + 1.3*this._pxs;
 			valueLabel.position.y = (barY + (this._categoryHeight/2)) - (valueLabel.height / 2);
 
 			// create TG
@@ -318,7 +316,7 @@ ChartLib.HorizontalTargetGraphChart = function (element) {
 			var yellow = this._axisScale(tl_range[1]);
 			var green = this._axisScale(tl_range[2]);
 			// x, y, last, current, plan, green, yellow, red, max_width, height, valueLabel, pxs
-			var horizontalTG = new ChartLib.HorizontalTargetGraph(this._axis_x, barY, last, current, plan,
+			var horizontalTG = new ChartLib.HorizontalTargetGraph(this._axis_x, barY, last, currentBarWidth, plan,
 															red, yellow, green, this._domain[1], this._categoryHeight, valueLabel, this._pxs);
 			this.horizontalTGContainer.addChild(horizontalTG);
 		}

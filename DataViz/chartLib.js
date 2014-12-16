@@ -10,6 +10,13 @@
 var ChartLib = ChartLib || {};
 
 /**
+* TextPosition Enum
+*/
+var TextPositionEnum = Object.freeze({
+			INNER: 0, LEFT: 1, RIGHT: 2, TOP: 3, BOTTOM: 4
+		});
+
+/**
 * Basic Chart "class".
 */
 ChartLib.BasicChart = function(element) {
@@ -566,7 +573,7 @@ ChartLib.BarChart.prototype.constructor = ChartLib.BarChart;
 * Column - graphical object
 */
 
-ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs) {
+ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs, textPos) {
 	// inherit Pixi.js Graphics object
 	PIXI.Graphics.apply(this, arguments);
 
@@ -577,9 +584,11 @@ ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs) {
 	this._height = height;
 	this._color = color;
 	this._pxs = pxs;
+	this._textPos = textPos;
 
 	this._valueLabel = valueLabel;
 	this.addChild(this._valueLabel);
+	console.log(valueLabel);
 
 	// draw simple column
 	this.draw = function () {
@@ -588,13 +597,23 @@ ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs) {
 		this.drawRect( this._x, this._y, this._width, -this._height);
 		this.endFill();
 
-		this._valueLabel.position.y = this._y - this._height - 1.3*this._pxs;
+		if (this._textPos == TextPositionEnum.TOP) {
+			this._valueLabel.position.y = this._y - this._height - 1.3*this._pxs;
+		}
+
+		if (this._textPos == TextPositionEnum.INNER) {
+			// ommit to small height
+			if (this._valueLabel.height < this._height - 1*this._pxs) {
+				this._valueLabel.visible = true;
+				this._valueLabel.position.y = this._y - (this._height / 2) - this._valueLabel.height/2;
+			} else {
+				this._valueLabel.visible = false;
+			}
+		}
 	};
 
 	this.update = function (height) {
 		this._height = height;
-		this._valueLabel.position.y = this._y - this._height - 1.3*this._pxs;
-
 		this.draw();
 	}
 
@@ -638,7 +657,8 @@ ChartLib.ColumnChart = function (element) {
 				valueLabel.position.x = columnX + ((this._categoryWidth/2) - (valueLabel.width / 2));
 				valueLabel.position.y = this._axis_y - columnHeight - 0.3*this._pxs;
 
-				var column = new ChartLib.Column(columnX, this._axis_y, val, this._categoryWidth, currentColumnHeight, valueLabel, 0x000000, this._pxs);
+				var column = new ChartLib.Column(columnX, this._axis_y, val, this._categoryWidth,
+											currentColumnHeight, valueLabel, 0x000000, this._pxs, TextPositionEnum.TOP);
 				this.columnContainer.addChild(column)
 
 				this.values[this.values.length] = val;
@@ -651,7 +671,6 @@ ChartLib.ColumnChart = function (element) {
 		for (var child = this._element.firstChild; child; child = child.nextSibling) {
 			var val = parseFloat(child.getAttribute("value"));
 			var columnHeight = this._axisScale(val);
-			var columnX = parseFloat(child.getAttribute("x")) * this._scale;
 			var currentColumnHeight = (val > this._currentHeight)? this._axisScale(this._currentHeight) : columnHeight;
 
 			this.columnContainer.children[i].update(currentColumnHeight);
@@ -670,36 +689,22 @@ ChartLib.ColumnChart.prototype.constructor = ChartLib.ColumnChart;
 /**
 * StackedColumn - graphical object
 */
-ChartLib.StackedColumn = function (x, y, val, width, height, valueLabel, color, pxs) {
+ChartLib.StackedColumn = function (columns) {
 	// inherit Pixi.js Graphics object
 	PIXI.Graphics.apply(this, arguments);
 
-	this._x = x;
-	this._y = y;
-	this._val = val;
-	this._width = width;
-	this._height = height;
-	this._color = color;
-	this._pxs = pxs;
-
-	this._valueLabel = valueLabel;
-
-	// ommit too small column heights, cause text will not fit in properly
-	if (this._valueLabel.height < this._height - 1*this._pxs) {
-		this.addChild(this._valueLabel);
+	// adding columns
+	for (var i=0; i<columns.length; i++) {
+		this.addChild(columns[i]);
 	}
 
-	// draw simple bar
-	this.draw = function() {
-		this.beginFill(this._color);
-		this.drawRect( this._x, this._y, this._width, -this._height);
-		this.endFill();
-
-		this._valueLabel.position.y = this._y - this._height/2 - this._valueLabel.height/2;
-	};
-
-	this.draw();
+	this.update = function(heights) {
+		for (var i=0; i<this.children.length; i++) {
+			this.children[i].update(heights[i]);
+		}
+	}
 }
+
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.StackedColumn.prototype = PIXI.Graphics.prototype;
 ChartLib.StackedColumn.prototype.constructor = ChartLib.StackedColumn;
@@ -720,26 +725,20 @@ ChartLib.StackedColumnChart = function (element) {
 		if (!this.stackedColumnContainer) {
 			this.stackedColumnContainer = new PIXI.DisplayObjectContainer();
 			this.addChild(this.stackedColumnContainer);
-		}
-
-		// values
-		this._values = new Array();
-		this.stackedColumnContainer.removeChildren();
-		for (var child = element.firstChild; child; child = child.nextSibling) {
-			var values = child.getAttribute("values").split(",");
-			var values_Sum = values.reduce(function(previousValue, currentValue, index, array) {
-				return previousValue + currentValue;
-			});
-			var currentStackedColumnHeight = 0;
 
 
-			for (var i=0; i<values.length; i++) {
-				var val = parseFloat(values[i]);
+			// values
+			this._values = new Array();
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				var values = child.getAttribute("values").split(",");
+				var values_Sum = values.reduce(function(previousValue, currentValue, index, array) {
+					return previousValue + currentValue;
+				});
+				var currentStackedColumnHeight = 0;
+				var columns = new Array();
 
-				// only render columns that are beneath or in the currentHeight range
-				if ((currentStackedColumnHeight + val < this._currentHeight) ||
-					(this._currentHeight >= currentStackedColumnHeight &&
-						this._currentHeight < currentStackedColumnHeight + val)) {
+				for (var i=0; i<values.length; i++) {
+					var val = parseFloat(values[i]);
 
 					var columnX = parseFloat(child.getAttribute("x")) * this._scale;
 					var columnHeight = this._axisScale(val);
@@ -753,18 +752,47 @@ ChartLib.StackedColumnChart = function (element) {
 					valueLabel.position.y = this._axis_y - currentStackedColumnHeight - (columnHeight / 2) + valueLabel.height/2;
 					valueLabel.position.x = (columnX + (this._categoryWidth/2)) - (valueLabel.width / 2);
 
-					var stackedColumn = new ChartLib.StackedColumn(columnX, this._axis_y - this._axisScale(currentStackedColumnHeight), val, this._categoryWidth,
-					 	currentColumnHeight, valueLabel, columnColor, this._pxs);
+					var column = new ChartLib.Column(columnX, this._axis_y - this._axisScale(currentStackedColumnHeight), val, this._categoryWidth,
+														0, valueLabel, columnColor, this._pxs, TextPositionEnum.INNER);
+					columns[i] = column;
 
-					this.stackedColumnContainer.addChild(stackedColumn);
 					currentStackedColumnHeight += val;
 				}
+
+				var stackedColumn = new ChartLib.StackedColumn(columns);
+				this.stackedColumnContainer.addChild(stackedColumn);
 			}
 		}
 	};
 
 	this.draw = function() {
-		// axis
+		// update columns
+		var i = 0;
+		for (var child = element.firstChild; child; child = child.nextSibling) {
+			var values = child.getAttribute("values").split(",");
+			var heights = new Array();
+			var currentStackedColumnHeight = 0;
+
+			for (var j=0; j<values.length; j++) {
+				var val = parseFloat(values[j]);
+				var columnHeight = this._axisScale(val);
+				var currentColumnHeight = 0;
+
+				// only render columns that are beneath or in the currentHeight range
+				if ((currentStackedColumnHeight + val < this._currentHeight) ||
+						(this._currentHeight >= currentStackedColumnHeight &&
+						this._currentHeight < currentStackedColumnHeight + val)) {
+					currentColumnHeight = (val + currentStackedColumnHeight > this._currentHeight)?
+					this._axisScale(this._currentHeight - currentStackedColumnHeight) : columnHeight;
+				}
+
+				currentStackedColumnHeight += val;
+				heights[j] = currentColumnHeight;
+			}
+
+			this.stackedColumnContainer.children[i].update(heights);
+			i++;
+		}
 	};
 
 	this.init(element);

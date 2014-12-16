@@ -70,7 +70,7 @@
   .attr("y", padding)
   .attr("title", "ExampleBarChart")
   .attr("domain_min", 0)
-  .attr("domain_max", 300)
+  .attr("domain_max", 400)
   .attr("current_width", 0)
   .attr("max_width", w - (2*padding))
   .attr("category_height", yPos.rangeBand())
@@ -97,7 +97,7 @@
   sketch.transition()
   .duration(1000)
   .attr("current_width", function ( d, i ) {
-    return 300;
+    return 400;
   })
   .each('end', pauseStackedBarUpdate);
 

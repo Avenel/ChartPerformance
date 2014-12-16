@@ -471,7 +471,7 @@ ChartLib.VerticalTargetGraphChart.prototype.constructor = ChartLib.VerticalTarge
 /**
 * Bar - graphical object
 */
-ChartLib.Bar = function (x, y, val, width, height, valueLabel, color, pxs) {
+ChartLib.Bar = function (x, y, val, width, height, valueLabel, color, pxs, textPos) {
 	// inherit Pixi.js Graphics object
 	PIXI.Graphics.apply(this, arguments);
 
@@ -482,6 +482,7 @@ ChartLib.Bar = function (x, y, val, width, height, valueLabel, color, pxs) {
 	this._height = height;
 	this._color = color;
 	this._pxs = pxs;
+	this._textPos = textPos;
 
 	this._valueLabel = valueLabel;
 	this.addChild(this._valueLabel);
@@ -492,13 +493,23 @@ ChartLib.Bar = function (x, y, val, width, height, valueLabel, color, pxs) {
 		this.drawRect( this._x, this._y, this._width, this._height);
 		this.endFill();
 
-		this._valueLabel.position.x = this._x + this._width + 0.3*this._pxs;
+		if (this._textPos == TextPositionEnum.RIGHT) {
+			this._valueLabel.position.x = this._x + this._width + 0.3*this._pxs;
+		}
+
+		if (this._textPos == TextPositionEnum.INNER) {
+			// ommit too small widths
+			if (this._valueLabel.width < this._width - 0.5*this._pxs) {
+				this._valueLabel.visible = true;
+				this._valueLabel.position.x = this._x + (this._width / 2) - this._valueLabel.width/2;
+			} else {
+				this._valueLabel.visible = false;
+			}
+		}
 	};
 
 	this.update = function (width) {
 		this._width = width;
-		this._valueLabel.position.x = this._x + this._width + 0.3*this._pxs;
-
 		this.draw();
 	}
 
@@ -806,35 +817,20 @@ ChartLib.StackedColumnChart.prototype.constructor = ChartLib.StackedColumnChart;
 /**
 * StackedBar - graphical object
 */
-ChartLib.StackedBar = function (x, y, val, width, height, valueLabel, color, pxs) {
+ChartLib.StackedBar = function (bars) {
 	// inherit Pixi.js Graphics object
 	PIXI.Graphics.apply(this, arguments);
 
-	this._x = x;
-	this._y = y;
-	this._val = val;
-	this._width = width;
-	this._height = height;
-	this._color = color;
-	this._pxs = pxs;
-
-	this._valueLabel = valueLabel;
-
-	// ommit too small column heights, cause text will not fit in properly
-	if (this._valueLabel.width < this._width - 1*this._pxs) {
-		this.addChild(this._valueLabel);
+	// adding bars
+	for (var i=0; i<bars.length; i++) {
+		this.addChild(bars[i]);
 	}
 
-	// draw simple bar
-	this.draw = function() {
-		this.beginFill(this._color);
-		this.drawRect( this._x, this._y, this._width, this._height);
-		this.endFill();
-
-		this._valueLabel.position.x = this._x + this._width/2 - this._valueLabel.width/2;
-	};
-
-	this.draw();
+	this.update = function(widths) {
+		for (var i=0; i<this.children.length; i++) {
+			this.children[i].update(widths[i]);
+		}
+	}
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
@@ -857,51 +853,75 @@ ChartLib.StackedBarChart = function (element) {
 		if (!this.stackedBarContainer) {
 			this.stackedBarContainer = new PIXI.DisplayObjectContainer();
 			this.addChild(this.stackedBarContainer);
-		}
 
-		// values
-		this._values = new Array();
-		this.stackedBarContainer.removeChildren();
-		for (var child = element.firstChild; child; child = child.nextSibling) {
-			var values = child.getAttribute("values").split(",");
-			var values_Sum = values.reduce(function(previousValue, currentValue, index, array) {
-				return previousValue + currentValue;
-			});
-			var currentStackedBarWidth = 0;
+			// values
+			this._values = new Array();
+			var i = 0;
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				var values = child.getAttribute("values").split(",");
+				var values_Sum = values.reduce(function(previousValue, currentValue, index, array) {
+					return previousValue + currentValue;
+				});
+				var currentStackedBarWidth = 0;
+				var widths = new Array();
+				var bars = new Array();
 
+				for (var j=0; j<values.length; j++) {
+					var val = parseFloat(values[j]);
+					var barY = parseFloat(child.getAttribute("y")) * this._scale;
+					var barWidth = this._axisScale(val);
+					var currentBarWidth = (val + currentStackedBarWidth > this._currentWidth)?
+						this._axisScale(this._currentWidth - currentStackedBarWidth) : barWidth;
 
-			for (var i=0; i<values.length; i++) {
-				var val = parseFloat(values[i]);
+					// value label
+					var barColor = 0x000000 + j*0x333333;
+					var textColor = (barColor < 0x666666)? "grey" : "black";
+					var valueLabel = new PIXI.Text(val, {font: (this._pxs) + "px arial", fill:textColor});
+					valueLabel.position.x = this._axis_x + currentStackedBarWidth + (barWidth / 2) - valueLabel.width/2;
+					valueLabel.position.y = (barY + (this._categoryHeight/2)) - (valueLabel.height / 2);
 
-				// only render columns that are beneath or in the currentHeight range
-				if ((currentStackedBarWidth + val < this._currentWidth) ||
-					(this._currentWidth >= currentStackedBarWidth &&
-						this._currentWidth < currentStackedBarWidth + val)) {
+					var bar = new ChartLib.Bar(this._axis_x + this._axisScale(currentStackedBarWidth), barY, val, 0,
+						this._categoryHeight, valueLabel, barColor, this._pxs, TextPositionEnum.INNER);
+					bars[j] = bar;
 
-							var barY = parseFloat(child.getAttribute("y")) * this._scale;
-							var barWidth = this._axisScale(val);
-							var currentBarWidth = (val + currentStackedBarWidth > this._currentWidth)?
-								this._axisScale(this._currentWidth - currentStackedBarWidth) : barWidth;
+					currentStackedBarWidth += val;
+				}
 
-							// value label
-							var barColor = 0x000000 + i*0x333333;
-							var textColor = (barColor < 0x666666)? "grey" : "black";
-							var valueLabel = new PIXI.Text(val, {font: (this._pxs) + "px arial", fill:textColor});
-							valueLabel.position.x = this._axis_x + currentStackedBarWidth + (barWidth / 2) - valueLabel.width/2;
-							valueLabel.position.y = (barY + (this._categoryHeight/2)) - (valueLabel.height / 2);
-
-							var stackedBar = new ChartLib.StackedBar(this._axis_x + this._axisScale(currentStackedBarWidth), barY, val, currentBarWidth,
-							this._categoryHeight, valueLabel, barColor, this._pxs);
-
-							this.stackedBarContainer.addChild(stackedBar);
-							currentStackedBarWidth += val;
-						}
-					}
+				var stackedBar = new ChartLib.StackedBar(bars);
+				this.stackedBarContainer.addChild(stackedBar);
+				i++;
+			}
 		}
 	}
 
 	this.draw = function() {
-		// axis
+		// update bars
+		var i=0;
+		for (var child = element.firstChild; child; child = child.nextSibling) {
+			var values = child.getAttribute("values").split(",");
+			var widths = new Array();
+			var currentStackedBarWidth = 0;
+
+			for (var j=0; j<values.length; j++) {
+				var val = parseFloat(values[j]);
+				var barWidth = this._axisScale(val);
+				var currentBarWidth = 0;
+
+				// only render bars that are beneath or in the currentWidth range
+				if ((currentStackedBarWidth + val < this._currentWidth) ||
+					(this._currentWidth >= currentStackedBarWidth &&
+						this._currentWidth < currentStackedBarWidth + val)) {
+					currentBarWidth = (val + currentStackedBarWidth > this._currentWidth)?
+						this._axisScale(this._currentWidth - currentStackedBarWidth) : barWidth;
+				}
+
+				currentStackedBarWidth += val;
+				widths[j] = currentBarWidth;
+			}
+
+			this.stackedBarContainer.children[i].update(widths);
+			i++;
+		}
 	};
 
 	this.init(element);

@@ -33,9 +33,9 @@
   // for retina displays its important to consider the devicePixelRatio...
   var scale = window.devicePixelRatio;
   var // 1 fontsize in em for ibcs standard measure
-  fs = 1, // 1fs / [em]
+  fs = 0.75, // 1fs / [em]
   // 1em = 16px (default browser value)
-  pxs = 16,
+  pxs = 16 * fs,
   category_w = 3.8,
   w = Math.floor(20*pxs*fs),
   h = Math.floor(data.length*pxs*fs*category_w),

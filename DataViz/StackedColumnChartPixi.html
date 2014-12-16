@@ -35,11 +35,11 @@
   var // 1 fontsize in em for ibcs standard measure
   fs = 1, // 1fs / [em]
   // 1em = 16px (default browser value)
-  pxs = 16,
+  pxs = 16*fs,
   category_w = 3.8,
-  w = Math.floor(data.length*pxs*fs*category_w),
-  h = Math.floor(15*pxs*fs),
-  padding = Math.floor(1*pxs*fs);
+  w = Math.floor(data.length*pxs*category_w),
+  h = Math.floor(15*pxs),
+  padding = Math.floor(1*pxs);
 
   var canvas = document.getElementById('chart');
   var options = new function() {

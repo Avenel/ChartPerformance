@@ -58,12 +58,12 @@
   // calculate xPosition of column
   var xPos = d3.scale.ordinal()
   .domain( d3.range( data.length ) )
-  .rangeRoundBands( [0, w - (2*padding)], 1/3);
+  .rangeRoundBands( [padding, w - (2*padding)], 1/category_w);
 
   // Add our "custom" sketch element to the body.
   var sketch = d3.select("body").append("cxustom:sketch")
-  .attr("width", w)
-  .attr("height", h)
+  .attr("width", w*scale)
+  .attr("height", h*scale)
   .attr("scale", scale)
   .attr("pxs", pxs)
   .attr("x", padding)
@@ -72,7 +72,7 @@
   .attr("domain_min", 0)
   .attr("domain_max", 25)
   .attr("current_height", 0)
-  .attr("max_height", h - (2*padding))
+  .attr("max_height", h - (3*padding))
   .attr("category_width", xPos.rangeBand())
   .attr("category_label_width", xPos.rangeBand());
 

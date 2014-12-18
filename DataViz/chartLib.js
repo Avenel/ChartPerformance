@@ -46,6 +46,10 @@ ChartLib.BasicChart = function(element) {
 		this._x = parseFloat(element.getAttribute("x")) * this._scale;
 		this._y = parseFloat(element.getAttribute("y")) * this._scale;
 
+		// width, height of chart
+		this._width = parseFloat(element.getAttribute("width"));
+		this._height = parseFloat(element.getAttribute("height"));
+
 		// Title
 		this._title = element.getAttribute("title");
 
@@ -1207,17 +1211,18 @@ ChartLib.HorizontalPin = function (x, y, val, width, valueLabel, pxs) {
 		this.endFill();
 
 		// marker
-		this.beginFill(0x000000);
-		this.drawRect( this._x + this._width, this._y - 0.175*this._pxs, 0.7*this._pxs, 0.7*this._pxs);
-		this.endFill();
 
+		this.beginFill(0x000000);
 		if (this._textPos == TextPositionEnum.LEFT) {
-			this._valueLabel.position.x = this._x + this._width - this._valueLabel.width - 0.3*this._pxs;
+			this.drawRect( this._x + this._width - 0.7*this._pxs, this._y - 0.2*this._pxs , 0.7*this._pxs, 0.7*this._pxs);
+			this._valueLabel.position.x = this._x + this._width - this._valueLabel.width - 1.3*this._pxs;
 		}
 
 		if (this._textPos == TextPositionEnum.RIGHT) {
+			this.drawRect( this._x + this._width, this._y - 0.2*this._pxs , 0.7*this._pxs, 0.7*this._pxs);
 			this._valueLabel.position.x = this._x + this._width + 1.3*this._pxs;
 		}
+		this.endFill();
 	}
 
 	this.update = function (width, val, showText) {
@@ -1258,6 +1263,9 @@ ChartLib.HorizontalPinChart = function (element) {
 		// first we dont need category labels
 		this._categoryLabelContainer.removeChildren();
 
+		// calculate actual height
+		this._height = (element.lastChild.getAttribute("y") - this._y + this._categoryHeight) * this._scale;
+
 		// horizontalPins container
 		if (!this.horizontalPinsContainer) {
 			this.horizontalPinsContainer = new PIXI.DisplayObjectContainer();
@@ -1277,7 +1285,7 @@ ChartLib.HorizontalPinChart = function (element) {
 				valueLabel.position.x = this._axis_x;
 				valueLabel.position.y = pinY - 0.375*this._pxs;
 
-				var horizontalPin = new ChartLib.HorizontalPin(this._axis_x, pinY, val, currentPinWidth, valueLabel, this._pxs);
+				var horizontalPin = new ChartLib.HorizontalPin(this._axis_x, pinY, val, currentPinWidth, valueLabel, this._categoryHeight, this._pxs);
 				this.horizontalPinsContainer.addChild(horizontalPin);
 			}
 		}
@@ -1285,6 +1293,11 @@ ChartLib.HorizontalPinChart = function (element) {
 	};
 
 	this.draw = function () {
+		// axis
+		this.beginFill(0x000000);
+		this.drawRect(this._axis_x, this._y, 1, this._height);
+		this.endFill();
+
 		var i = 0;
 		for (var child = this._element.firstChild; child; child = child.nextSibling) {
 			var val = parseFloat(child.getAttribute("value"));
@@ -1324,8 +1337,6 @@ ChartLib.VerticalPin = function (x, y, val, height, valueLabel, pxs) {
 	this._valueLabel = valueLabel;
 	this.addChild(this._valueLabel);
 
-	console.log(this);
-
 	this.draw = function () {
 		this.clear();
 
@@ -1336,16 +1347,16 @@ ChartLib.VerticalPin = function (x, y, val, height, valueLabel, pxs) {
 
 		// marker
 		this.beginFill(0x000000);
-		this.drawRect( this._x - 0.175*this._pxs, this._y - this._height, 0.7*this._pxs, 0.7*this._pxs);
-		this.endFill();
-
 		if (this._textPos == TextPositionEnum.BOTTOM) {
+			this.drawRect( this._x - 0.2*this._pxs, this._y - this._height, 0.7*this._pxs, 0.7*this._pxs);
 			this._valueLabel.position.y = this._y - this._height + 1.0*this._pxs;
 		}
 
 		if (this._textPos == TextPositionEnum.TOP) {
-			this._valueLabel.position.y = this._y - this._height - 1.3*this._pxs;
+			this.drawRect( this._x - 0.2*this._pxs, this._y - this._height - 0.7*this._pxs, 0.7*this._pxs, 0.7*this._pxs);
+			this._valueLabel.position.y = this._y - this._height - 2.0*this._pxs;
 		}
+		this.endFill();
 	}
 
 	this.update = function (height, val, showText) {
@@ -1386,7 +1397,8 @@ ChartLib.VerticalPinChart = function (element) {
 		// first we dont need category labels
 		this._categoryLabelContainer.removeChildren();
 
-		console.log(this);
+		// calculate actual width
+		this._width = (element.lastChild.getAttribute("x") - this._x + this._categoryWidth/2) * this._scale;
 
 		// horizontalPins container
 		if (!this.verticalPinsContainer) {
@@ -1404,7 +1416,7 @@ ChartLib.VerticalPinChart = function (element) {
 				var currentPinHeight = (Math.abs(val) > this._currentHeight)? this._axisScale((val / Math.abs(val)) * this._currentHeight) : pinHeight;
 
 				var valueLabel = new PIXI.Text(val, {font: (this._pxs ) + "px arial", fill:"black"});
-				valueLabel.position.x = pinX + 0.175*this._pxs - (valueLabel.width/2);
+				valueLabel.position.x = pinX - 0.375*this._pxs;
 				valueLabel.position.y = this._axis_y;
 
 				var verticalPin = new ChartLib.VerticalPin(pinX, this._axis_y, val, currentPinHeight, valueLabel, this._pxs);
@@ -1415,6 +1427,11 @@ ChartLib.VerticalPinChart = function (element) {
 	};
 
 	this.draw = function () {
+		// axis
+		this.beginFill(0x000000);
+		this.drawRect(this._x, this._axis_y, this._width, 1);
+		this.endFill();
+
 		var i = 0;
 		for (var child = this._element.firstChild; child; child = child.nextSibling) {
 			var val = parseFloat(child.getAttribute("value"));

@@ -63,8 +63,8 @@
 
   // Add our "custom" sketch element to the body.
   var sketch = d3.select("body").append("cxustom:sketch")
-  .attr("width", w)
-  .attr("height", h)
+  .attr("width", w*scale)
+  .attr("height", h*scale)
   .attr("scale", scale)
   .attr("pxs", pxs)
   .attr("x", padding)

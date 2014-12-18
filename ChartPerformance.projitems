@@ -60,6 +60,9 @@
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\VerticalPinChartPixi.html">
       <LogicalName>ChartPerformance.VerticalPinChartPixi.html</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)DataViz\HorizontalWaterfallChartPixi.html">
+      <LogicalName>ChartPerformance.HorizontalWaterfallChartPixi.html</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)handleRessources.sh" />

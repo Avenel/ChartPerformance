@@ -122,7 +122,7 @@ ChartLib.BasicHorizontalChart = function (element) {
 			for (var child = element.firstChild; child; child = child.nextSibling) {
 				var categoryName = child.getAttribute("category_name");
 				var categoryLabel = new PIXI.Text(categoryName, {font: (this._pxs) + "px arial", fill:"black",
-				wordWrap: true, wordWrapWith: this._categoryLabelWidth, align:"right"});
+				wordWrap: false, wordWrapWith: this._categoryLabelWidth, align:"right"});
 
 				// calculate textposition
 				categoryLabel.position.x = this._x + (this._categoryLabelWidth - categoryLabel.width);
@@ -531,6 +531,10 @@ ChartLib.Bar = function (x, y, val, width, height, valueLabel, color, pxs, textP
 
 		if (this._textPos == TextPositionEnum.RIGHT) {
 			this._valueLabel.position.x = this._x + this._width + 0.3*this._pxs;
+		}
+
+		if (this._textPos == TextPositionEnum.LEFT) {
+			this._valueLabel.position.x = this._x + this._width - this._valueLabel.width - 0.3*this._pxs;
 		}
 
 		if (this._textPos == TextPositionEnum.INNER) {
@@ -1450,3 +1454,124 @@ ChartLib.VerticalPinChart = function (element) {
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.VerticalPinChart.prototype = Object.create( ChartLib.BasicVerticalChart.prototype );
 ChartLib.VerticalPinChart.prototype.constructor = ChartLib.VerticalPinChart;
+
+/**
+* Bar in a Waterfallchart - graphical element
+*/
+ChartLib.WaterfallBar = function (bar, categoryHeight, type) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+
+	this._bar = bar;
+	this.addChild(this._bar);
+
+	this._categoryHeight = categoryHeight;
+	this._type = type;
+
+	this.draw = function() {
+		// draw line to previous bar
+		this.beginFill(0x666666);
+		this.drawRect((this._type == "variance")? this._bar._x : this._bar._x + this._bar._width, this._bar._y, 1, -this._categoryHeight/2);
+		this.endFill();
+	};
+
+	this.update = function(width, showText, showBar) {
+		this.visible = showBar;
+		this._bar.update(width, showText);
+		this.draw();
+	};
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.WaterfallBar.prototype = PIXI.Graphics.prototype;
+ChartLib.WaterfallBar.prototype.constructor = ChartLib.WaterfallBar;
+
+/**
+* Horizontal WaterfallChart
+*/
+ChartLib.HorizontalWaterfallChart = function (element) {
+	ChartLib.BasicHorizontalChart.apply(this);
+	this.type = "horizontalWaterfallChart";
+
+	this.init = function (element) {
+		// call super init
+		this.initHorizontalChart(element);
+
+		this.currentLine = parseInt(element.getAttribute("current_line"));
+
+		// calc x pos for chart axis (center)
+		this._max_width = (parseFloat(element.getAttribute("max_width")) - this._categoryLabelWidth) * this._scale - 4*this._pxs;
+		this._axis_x = this._x + this._categoryLabelWidth + 1*this._pxs;
+
+		// calc axis
+		this._range = [0, this._max_width];
+		this._axisScale = d3.scale.linear()
+			.domain(this._domain)
+			.range( this._range);
+
+		// calc actual height
+		this._height = (parseFloat(this._element.lastChild.getAttribute("y")) - this._y + this._categoryHeight)*this._scale + 1*this._pxs;
+
+		// horizontalPins container
+		if (!this.waterfallBarsContainer) {
+			this.waterfallBarsContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.waterfallBarsContainer);
+
+			// values
+			this.values = new Array();
+			var prevBarX = this._axis_x;
+
+			// first we dont need category labels
+			// this._categoryLabelContainer.removeChildren();
+
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				var val = parseFloat(child.getAttribute("value"));
+
+				var barType = child.getAttribute("type");
+				var barWidth = this._axisScale(val);
+				var barY = parseFloat(child.getAttribute("y")) * this._scale;
+				var barX = (barType == "result")? this._axis_x : prevBarX;
+				var currentBarWidth = barWidth; // (val > this._currentWidth)? this._axisScale(this._currentWidth) :
+
+				var valText = new String(val).replace("-", "");
+				var valueLabel = new PIXI.Text(valText, {font: (this._pxs ) + "px arial", fill:"black"});
+				valueLabel.position.x = barX + barWidth + 0.3*this._pxs;
+				valueLabel.position.y = (barY + (this._categoryHeight/2)) - (valueLabel.height / 2);
+
+				var textPos = (val < 0)? TextPositionEnum.LEFT : TextPositionEnum.RIGHT;
+				var color = (val < 0)? 0x333333 : 0x999999;
+				color = (barType=="variance")? color : 0x000000
+				var bar = new ChartLib.Bar(barX, barY, val, currentBarWidth, this._categoryHeight, valueLabel, color, this._pxs, textPos);
+				var waterfallBar = new ChartLib.WaterfallBar(bar, this._categoryHeight, barType);
+				this.waterfallBarsContainer.addChild(waterfallBar);
+
+				prevBarX = barX + barWidth;
+				this.values[this.values.length] = val;
+			}
+		}
+	};
+
+	this.draw = function () {
+		// axis
+		this.beginFill(0x000000);
+		this.drawRect(this._axis_x, parseFloat(this._element.firstChild.getAttribute("y")), 2, this._height);
+		this.endFill();
+
+		var i = 0;
+		for (var child = this._element.firstChild; child; child = child.nextSibling) {
+			var val = parseFloat(child.getAttribute("value"));
+			var barWidth = this._axisScale(val);
+			var showBar = (this.currentLine >= i)? true : false;
+
+			this.waterfallBarsContainer.children[i].update(barWidth, !this._animate, showBar);
+			i++;
+		}
+	};
+
+	this.init(element);
+	this.draw();
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.HorizontalWaterfallChart.prototype = Object.create( ChartLib.BasicHorizontalChart.prototype );
+ChartLib.HorizontalWaterfallChart.prototype.constructor = ChartLib.HorizontalWaterfallChart;

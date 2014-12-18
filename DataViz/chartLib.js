@@ -640,7 +640,6 @@ ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs, te
 	this.addChild(this._valueLabel);
 	this._valueLabel.visible = false;
 
-
 	// draw simple column
 	this.draw = function () {
 		this.clear();
@@ -651,6 +650,10 @@ ChartLib.Column = function (x, y, val, width, height, valueLabel, color, pxs, te
 
 		if (this._textPos == TextPositionEnum.TOP) {
 			this._valueLabel.position.y = this._y - this._height - 1.3*this._pxs;
+		}
+
+		if (this._textPos == TextPositionEnum.BOTTOM) {
+			this._valueLabel.position.y = this._y - this._height + 0.3*this._pxs;
 		}
 
 		if (this._textPos == TextPositionEnum.INNER) {
@@ -1575,3 +1578,124 @@ ChartLib.HorizontalWaterfallChart = function (element) {
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.HorizontalWaterfallChart.prototype = Object.create( ChartLib.BasicHorizontalChart.prototype );
 ChartLib.HorizontalWaterfallChart.prototype.constructor = ChartLib.HorizontalWaterfallChart;
+
+/**
+* Column in a Waterfallchart - graphical element
+*/
+ChartLib.WaterfallColumn = function(column, categoryWidth, type) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+
+	this._column = column;
+	this.addChild(this._column);
+
+	this._categoryWidth = categoryWidth;
+	this._type = type;
+
+	this.draw = function() {
+		// draw line to previous bar
+		this.beginFill(0x666666);
+		this.drawRect(this._column._x, (this._type == "variance")? this._column._y : this._column._y - this._column._height, -this._categoryWidth/2, 1);
+		this.endFill();
+	};
+
+	this.update = function(height, showText, showColumn) {
+		this.visible = showColumn;
+		this._column.update(height, showText);
+		this.draw();
+	};
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.WaterfallColumn.prototype = PIXI.Graphics.prototype;
+ChartLib.WaterfallColumn.prototype.constructor = ChartLib.WaterfallColumn;
+
+/**
+* Vertical WaterfallChart
+*/
+ChartLib.VerticalWaterfallChart = function (element) {
+	ChartLib.BasicVerticalChart.apply(this);
+	this.type = "verticalWaterfallChart";
+
+	this.init = function (element) {
+		// call super init
+		this.initVerticalChart(element);
+
+		this.currentLine = parseInt(element.getAttribute("current_line"));
+
+		// calc x pos for chart axis (center)
+		this._max_height = (parseFloat(element.getAttribute("max_height"))) * this._scale - 1*this._pxs;
+		this._axis_y = this._y - 1.3*this._pxs;
+
+		// calc axis
+		this._range = [0, this._max_height];
+		this._axisScale = d3.scale.linear()
+			.domain(this._domain)
+			.range( this._range);
+
+		// calc actual width
+		this._width = (parseFloat(this._element.lastChild.getAttribute("x")) - this._x + this._categoryWidth)*this._scale + 1*this._pxs;
+
+		// horizontalPins container
+		if (!this.waterfallColumnsContainer) {
+			this.waterfallColumnsContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.waterfallColumnsContainer);
+
+			// values
+			this.values = new Array();
+			var prevColumnY = this._axis_y;
+
+			// first we dont need category labels
+			// this._categoryLabelContainer.removeChildren();
+
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				var val = parseFloat(child.getAttribute("value"));
+
+				var columnType = child.getAttribute("type");
+				var columnHeight = this._axisScale(val);
+				var columnX = parseFloat(child.getAttribute("x")) * this._scale;
+				var columnY = (columnType == "result")? this._axis_y : prevColumnY;
+				var currentColumnHeight = columnHeight;
+
+				var valText = new String(val).replace("-", "");
+				var valueLabel = new PIXI.Text(valText, {font: (this._pxs ) + "px arial", fill:"black"});
+				valueLabel.position.y = columnY - columnHeight - 0.3*this._pxs;
+				valueLabel.position.x = (columnX + (this._categoryWidth/2)) - (valueLabel.width / 2);
+
+				var textPos = (val < 0)? TextPositionEnum.BOTTOM : TextPositionEnum.TOP;
+				var color = (val < 0)? 0x333333 : 0x999999;
+				color = (columnType=="variance")? color : 0x000000
+				var column = new ChartLib.Column(columnX, columnY, val, this._categoryWidth, currentColumnHeight, valueLabel, color, this._pxs, textPos);
+				var waterfallColumn = new ChartLib.WaterfallColumn(column, this._categoryWidth, columnType);
+				this.waterfallColumnsContainer.addChild(waterfallColumn);
+
+				prevColumnY = columnY - columnHeight;
+				this.values[this.values.length] = val;
+			}
+		}
+	};
+
+	this.draw = function () {
+		// axis
+		this.beginFill(0x000000);
+		this.drawRect(parseFloat(this._element.firstChild.getAttribute("x")), this._axis_y, this._width, 2);
+		this.endFill();
+
+		var i = 0;
+		for (var child = this._element.firstChild; child; child = child.nextSibling) {
+			var val = parseFloat(child.getAttribute("value"));
+			var columnHeight = this._axisScale(val);
+			var showColumn = (this.currentLine >= i)? true : false;
+
+			this.waterfallColumnsContainer.children[i].update(columnHeight, !this._animate, showColumn);
+			i++;
+		}
+	};
+
+	this.init(element);
+	this.draw();
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.VerticalWaterfallChart.prototype = Object.create( ChartLib.BasicVerticalChart.prototype );
+ChartLib.VerticalWaterfallChart.prototype.constructor = ChartLib.VerticalWaterfallChart;

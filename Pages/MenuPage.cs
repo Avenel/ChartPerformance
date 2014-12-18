@@ -58,6 +58,7 @@ namespace ChartPerformance.Pages
             MenuItems.Add(new HorizontalPinChartPixiMenuItem());
             MenuItems.Add(new VerticalPinChartPixiMenuItem());
             MenuItems.Add(new HorizontalWaterfallChartPixiMenuItem());
+            MenuItems.Add(new VerticalWaterfallChartPixiMenuItem());
 
             Menu = new ListView {
                 ItemsSource = MenuItems,

@@ -1,0 +1,153 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Column Chart</title>
+  <style>
+  body {
+    margin: 0;
+    background-color: #FFFFFF;
+  }
+  </style>
+
+  <script src="d3.v3.min.js"></script>
+  <script src="pixi.dev.js"></script>
+  <script src="chartLib.js"></script>
+  <!-- <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script> -->
+
+</head>
+<body>
+  <canvas id="chart"></canvas>
+  <script>
+  // data
+  var data =
+  [
+  {"title":"Jan",  "type":"result", "val":1061},
+  {"title":"Feb",  "type":"variance", "val":17},
+  {"title":"Mrz",  "type":"variance", "val":-379},
+  {"title":"Apr",  "type":"variance", "val":-54},
+  {"title":"Mai",  "type":"variance", "val":-127},
+  {"title":"Jun",  "type":"variance", "val":-40},
+  {"title":"Jul",  "type":"variance", "val":-152},
+  {"title":"Aug",  "type":"variance", "val":326},
+  {"title":"Sep",  "type":"variance", "val":53},
+  {"title":"Oct",  "type":"variance", "val":66},
+  {"title":"Nov",  "type":"variance", "val":445},
+  {"title":"Dez",  "type":"result", "val":1216},
+  ]
+
+  // create an new instance of a pixi stage
+  var stage = new PIXI.Stage(0xFFFFFF, true);
+
+  // for retina displays its important to consider the devicePixelRatio...
+  var scale = window.devicePixelRatio;
+  var // 1 fontsize in em for ibcs standard measure
+  fs = 0.43, // 1fs / [em]
+  // 1em = 16px (default browser value)
+  pxs = 16 * fs,
+  category_w = 3.8,
+  h = Math.floor(20*pxs),
+  w = Math.floor(data.length*pxs*category_w),
+  padding = Math.floor(1*pxs);
+
+  var canvas = document.getElementById('chart');
+  var options = new function() {
+    this.transparent = false;
+    this.view = canvas;
+  }
+
+  var renderer = PIXI.autoDetectRecommendedRenderer(w*scale, h*scale, options);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+
+  d3.select("body").append("custom:renderer")
+  .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
+
+
+  // calculate xPosition of column
+  var xPos = d3.scale.ordinal()
+  .domain( d3.range( data.length ) )
+  .rangeRoundBands( [padding, w - (2*padding)], 1/3);
+
+  // Add our "custom" sketch element to the body.
+  var sketch = d3.select("body").append("cxustom:sketch")
+  .attr("width", w)
+  .attr("height", h)
+  .attr("scale", scale)
+  .attr("pxs", pxs)
+  .attr("x", padding)
+  .attr("y", h-padding)
+  .attr("title", "ExampleColumnChart")
+  .attr("domain_min", 0)
+  .attr("domain_max", 1300)
+  .attr("current_height", 0)
+  .attr("current_line", 0)
+  .attr("max_height", h - (2*padding))
+  .attr("category_width", xPos.rangeBand())
+  .attr("category_label_width", xPos.rangeBand());
+
+  // append bar objects to sketch
+  var column = sketch.selectAll("column").data(data);
+  column.enter()
+  .append( "column" )
+  .attr({
+    category_name: function( d, i ) {
+      return d.title;
+    },
+    x: function ( d, i ) {
+      return xPos(i);
+    },
+    value: function( d, i ) {
+      return d.val;
+    },
+    type : function( d, i ) {
+      return d.type;
+    }
+  })
+  .call(addColumns);
+
+  sketch.transition()
+  .duration(2000)
+  .attr("current_line", function ( d, i ) {
+    return data.length;
+  })
+  .each('end', pauseColumnUpdate);
+
+  var columnChart = null;
+
+  // insert bullets into pixi canvas
+  function addColumns() {
+    console.log("adding columns");
+    var root = d3.select("sketch")[0][0];
+    columnChart = new ChartLib.VerticalWaterfallChart(root);
+    stage.addChild(columnChart);
+  };
+
+  function updateColumns () {
+    var root = d3.select("sketch")[0][0];
+    columnChart = stage.children[0];
+    if (columnChart && columnChart._animate) {
+      columnChart.update(root);
+    }
+  }
+
+  function pauseColumnUpdate () {
+    columnChart = stage.children[0];
+    if (columnChart) {
+      columnChart.toggleAnimate();
+    }
+  };
+
+  // run the render loop
+  requestAnimFrame(animate);
+
+  renderer.render(stage);
+
+  function animate() {
+    updateColumns();
+    renderer.render(stage);
+    requestAnimFrame(animate);
+  }
+
+  </script>
+</body>
+</html>

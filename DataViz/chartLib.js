@@ -1473,6 +1473,7 @@ ChartLib.WaterfallBar = function (bar, categoryHeight, type) {
 
 	this.draw = function() {
 		// draw line to previous bar
+		this.clear();
 		this.beginFill(0x666666);
 		this.drawRect((this._type == "variance")? this._bar._x : this._bar._x + this._bar._width, this._bar._y, 1, -this._categoryHeight/2);
 		this.endFill();
@@ -1534,7 +1535,7 @@ ChartLib.HorizontalWaterfallChart = function (element) {
 				var barWidth = this._axisScale(val);
 				var barY = parseFloat(child.getAttribute("y")) * this._scale;
 				var barX = (barType == "result")? this._axis_x : prevBarX;
-				var currentBarWidth = barWidth; // (val > this._currentWidth)? this._axisScale(this._currentWidth) :
+				var currentBarWidth = 0; //barWidth; // (val > this._currentWidth)? this._axisScale(this._currentWidth) :
 
 				var valText = new String(val).replace("-", "");
 				var valueLabel = new PIXI.Text(valText, {font: (this._pxs ) + "px arial", fill:"black"});
@@ -1562,8 +1563,10 @@ ChartLib.HorizontalWaterfallChart = function (element) {
 
 		var i = 0;
 		for (var child = this._element.firstChild; child; child = child.nextSibling) {
+			var curr_width = parseFloat(child.getAttribute("current_width"));
 			var val = parseFloat(child.getAttribute("value"));
-			var barWidth = this._axisScale(val);
+
+			var barWidth = this._axisScale(curr_width);
 			var showBar = (this.currentLine >= i)? true : false;
 
 			this.waterfallBarsContainer.children[i].update(barWidth, !this._animate, showBar);
@@ -1594,6 +1597,7 @@ ChartLib.WaterfallColumn = function(column, categoryWidth, type) {
 
 	this.draw = function() {
 		// draw line to previous bar
+		this.clear()
 		this.beginFill(0x666666);
 		this.drawRect(this._column._x, (this._type == "variance")? this._column._y : this._column._y - this._column._height, -this._categoryWidth/2, 1);
 		this.endFill();
@@ -1683,7 +1687,7 @@ ChartLib.VerticalWaterfallChart = function (element) {
 
 		var i = 0;
 		for (var child = this._element.firstChild; child; child = child.nextSibling) {
-			var val = parseFloat(child.getAttribute("value"));
+			var val = parseFloat(child.getAttribute("current_height"));
 			var columnHeight = this._axisScale(val);
 			var showColumn = (this.currentLine >= i)? true : false;
 

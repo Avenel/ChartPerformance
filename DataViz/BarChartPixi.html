@@ -40,7 +40,9 @@
   category_w = 1.8,
   w = Math.floor(20*pxs), // 1.8fs = recommended category width
   h = Math.floor(data.length*pxs*category_w),
-  padding = Math.floor(1*pxs);
+  padding = Math.floor(1*pxs),
+  transitionDuration = 1000,
+  domainMax = d3.max(data.filter(function(item) {return item.val;})).val;
 
   var canvas = document.getElementById('chart');
   var options = new function() {
@@ -71,7 +73,7 @@
   .attr("y", padding)
   .attr("title", "ExampleBarChart")
   .attr("domain_min", 0)
-  .attr("domain_max", 300)
+  .attr("domain_max", domainMax)
   .attr("current_width", 0)
   .attr("max_width", w - (2*padding))
   .attr("category_height", yPos.rangeBand())
@@ -95,11 +97,18 @@
   .call(addBars);
 
   sketch.transition()
-  .duration(1000)
+  .duration(transitionDuration)
   .attr("current_width", function ( d, i ) {
-    return 300;
+    return domainMax;
   })
   .each('end', pauseBarUpdate);
+
+
+  d3.selectAll("bar").transition()
+  .duration(transitionDuration/data.length).attr("current_width", function (d,i) {
+    return d.val;
+  })
+  .delay(function(d, i) { return i * (transitionDuration/data.length); });
 
   var barChart = null;
 

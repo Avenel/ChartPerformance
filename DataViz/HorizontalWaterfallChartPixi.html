@@ -44,13 +44,15 @@
   // for retina displays its important to consider the devicePixelRatio...
   var scale = window.devicePixelRatio;
   var // 1 fontsize in em for ibcs standard measure
-  fs = .65, // 1fs / [em]
+  fs = 1.0, // 1fs / [em]
   // 1em = 16px (default browser value)
   pxs = 16*fs,
   category_w = 1.8,
   w = Math.floor(40*pxs), // 1.8fs = recommended category width
   h = Math.floor(data.length*pxs*category_w),
-  padding = Math.floor(1*pxs);
+  padding = Math.floor(1*pxs),
+  transitionDuration = 2000,
+  domainMax = d3.max(data.filter(function(item) {return item.val;})).val;
 
   var canvas = document.getElementById('chart');
   var options = new function() {
@@ -81,8 +83,7 @@
   .attr("y", padding)
   .attr("title", "ExampleBarChart")
   .attr("domain_min", 0)
-  .attr("domain_max", 1100)
-  .attr("current_width", 0)
+  .attr("domain_max", domainMax)
   .attr("current_line", 0)
   .attr("max_width", w - (2*padding))
   .attr("category_height", yPos.rangeBand())
@@ -104,22 +105,26 @@
     },
     type : function( d, i ) {
       return d.type;
-    }
+    },
+    current_width:  0
   })
   .call(addBars);
 
   sketch.transition()
-  .duration(2000)
-  .attr("current_line", function ( d, i ) {
-    return data.length;
-  })
-  .each('end', pauseBarUpdate);
+    .duration(transitionDuration)
+    .attr("current_line", data.length)
+    .each('end', pauseBarUpdate);
+
+  d3.selectAll("bar").transition()
+    .duration(transitionDuration/data.length).attr("current_width", function (d,i) {
+      return d.val;
+    })
+    .delay(function(d, i) { return i * (transitionDuration/data.length); });
 
   var barChart = null;
 
   // insert bullets into pixi canvas
-  function addBars() {
-    console.log("adding bars");
+  function addBars(selection) {
     var root = d3.select("sketch")[0][0];
     barChart = new ChartLib.HorizontalWaterfallChart(root);
     stage.addChild(barChart);

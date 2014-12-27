@@ -1505,7 +1505,7 @@ ChartLib.HorizontalWaterfallChart = function (element) {
 
 		// calc x pos for chart axis (center)
 		this._max_width = (parseFloat(element.getAttribute("max_width")) - this._categoryLabelWidth) * this._scale - 4*this._pxs;
-		this._axis_x = this._x + this._categoryLabelWidth + 1*this._pxs;
+		this._axis_x = this._x + this._categoryLabelWidth + 0.5*this._pxs;
 
 		// calc axis
 		this._range = [0, this._max_width];
@@ -1703,3 +1703,127 @@ ChartLib.VerticalWaterfallChart = function (element) {
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.VerticalWaterfallChart.prototype = Object.create( ChartLib.BasicVerticalChart.prototype );
 ChartLib.VerticalWaterfallChart.prototype.constructor = ChartLib.VerticalWaterfallChart;
+
+/**
+ * Basic chart with two axis.
+*/
+ChartLib.Basic2AxisChart = function (element) {
+	ChartLib.BasicChart.apply(this);
+	this.type = "basic2AxisChart";
+
+	this.init2AxisChart = function (element) {
+		// call super init
+		this.initDefault(element);
+
+		// default x and y position of axis: bottom left
+		this._x_axis_x = this._x + 3*this._pxs;
+		this._x_axis_y = this._y - (this._pxs * 1.3);
+
+		this._y_axis_x = this._x + 3*this._pxs;
+		this._y_axis_y = this._y - (this._pxs * 1.3);
+
+		// max width and height
+		this._max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
+		this._max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 2*this._pxs;
+
+		// calc axis
+		this._domain_x_min = parseFloat(element.getAttribute("domain_x_min"));
+		this._domain_x_max = parseFloat(element.getAttribute("domain_x_max"));
+		this._domain_x = [this._domain_x_min, this._domain_x_max];
+		this._range_x = [0, this._max_width];
+		this._axisScale_x = d3.scale.linear()
+			.domain(this._domain_x)
+			.range( this._range_x);
+
+		this._domain_y_min = parseFloat(element.getAttribute("domain_y_min"));
+		this._domain_y_max = parseFloat(element.getAttribute("domain_y_max"));
+		this._domain_y = [this._domain_y_min, this._domain_y_max];
+		this._range_y = [0, this._max_height];
+		this._axisScale_y = d3.scale.linear()
+			.domain(this._domain_y)
+			.range( this._range_y);
+
+		// axis ticks
+		var _arguments = [8];
+		this.tickFormat_x = this._axisScale_x.tickFormat.apply(this.scale, _arguments);
+		this.ticks_x = this._axisScale_x.ticks.apply(this._axisScale_x, _arguments);
+
+		this.tickFormat_y = this._axisScale_y.tickFormat.apply(this.scale, _arguments);
+		this.ticks_y = this._axisScale_y.ticks.apply(this._axisScale_y, _arguments);
+
+		console.log(this);
+	}
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.Basic2AxisChart.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.Basic2AxisChart.prototype.constructor = ChartLib.Basic2AxisChart;
+
+/**
+* Basic dot in a scatterplot
+*/
+ChartLib.BasicDot = function (x, y, radius) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+	this.type = "basicDot";
+
+	this._x = x;
+	this._y = y;
+	this._radius = radius;
+
+	this.init = function (element) {
+	};
+
+	this.draw = function () {
+		this.clear();
+		this.beginFill(0x000000);
+		this.drawCircle( this._x - (this._radius/2), this._y - (this._radius/2), this._radius);
+		this.endFill();
+	};
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.BasicDot.prototype = Object.create( PIXI.Graphics.prototype );
+ChartLib.BasicDot.prototype.constructor = ChartLib.BasicDot;
+
+/**
+* Scatterplot - simple
+*/
+ChartLib.ScatterPlot = function(element) {
+	ChartLib.Basic2AxisChart.apply(this);
+	this.type = "scatterPlot";
+
+	this.init = function (element) {
+		// call super init
+		this.init2AxisChart(element);
+
+		// column container
+		if (!this.dotContainer) {
+			this.dotContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.dotContainer);
+
+			// this.columnContainer.removeChildren();
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				var x = this._x_axis_x + this._axisScale_x(parseFloat(child.getAttribute("x")));
+				var y = this._y_axis_y - this._axisScale_y(parseFloat(child.getAttribute("y")));
+
+				var dot = new ChartLib.BasicDot(x, y, this._pxs/5);
+				this.dotContainer.addChild(dot);
+			}
+		}
+	};
+
+	this.draw = function () {
+		var i = 0;
+		for (var child = this._element.firstChild; child; child = child.nextSibling) {
+			this.dotContainer.children[i].update();
+			i++;
+		}
+	};
+
+	this.init(element);
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.ScatterPlot.prototype = Object.create( ChartLib.Basic2AxisChart.prototype );
+ChartLib.ScatterPlot.prototype.constructor = ChartLib.ScatterPlot;

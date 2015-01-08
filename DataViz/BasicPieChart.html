@@ -1,0 +1,120 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Pie Chart</title>
+  <style>
+  body {
+    margin: 0;
+    background-color: #FFFFFF;
+  }
+  </style>
+
+  <script src="d3.v3.min.js"></script>
+  <script src="pixi.dev.js"></script>
+  <script src="chartLib.js"></script>
+  <!-- <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script> -->
+
+</head>
+<body>
+  <canvas id="chart"></canvas>
+  <script>
+  // data
+  var data = [
+    190, 230, 90, 30, 86
+  ];
+
+  // create an new instance of a pixi stage
+  var stage = new PIXI.Stage(0xFFFFFF, true);
+
+  // for retina displays its important to consider the devicePixelRatio...
+  var scale = window.devicePixelRatio;
+  var // 1 fontsize in em for ibcs standard measure
+  fs = 1.0, // 1fs / [em]
+  // 1em = 16px (default browser value)
+  pxs = 16*fs,
+  category_w = 1.8,
+  w = Math.floor(40*pxs), // 1.8fs = recommended category width
+  h = Math.floor(40*pxs),
+  padding = Math.floor(1*pxs),
+  transitionDuration = 1000;
+
+  var domainSum = d3.sum(data);
+
+  var canvas = document.getElementById('chart');
+  var options = new function() {
+    this.transparent = false;
+    this.view = canvas;
+  }
+
+  var renderer = PIXI.autoDetectRecommendedRenderer(w*scale, h*scale, options);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+
+  d3.select("body").append("custom:renderer")
+  .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
+
+
+  // Add our "custom" sketch element to the body.
+  var sketch = d3.select("body").append("cxustom:sketch")
+  .attr("width", w)
+  .attr("height", h)
+  .attr("scale", scale)
+  .attr("pxs", pxs)
+  .attr("x", padding)
+  .attr("y", padding)
+  .attr("title", "ExamplePieChart")
+  .attr("domain_sum", domainSum)
+  .attr("max_width", w - (2*padding))
+  .attr("max_height", h - (2*padding))
+
+  // append bar objects to sketch
+  var segment = sketch.selectAll("segment").data(data);
+  segment.enter()
+    .append('segment')
+    .attr({
+      val: function (d, i) {
+        console.log((d/domainSum) *  2 * Math.PI);
+        return (d/domainSum) *  2 * Math.PI;
+      }
+    })
+    .call(addPie);
+
+  var pieChart = null;
+
+  function addPie() {
+    var root = d3.select("sketch")[0][0];
+    pieChart = new ChartLib.PieChart(root);
+    stage.addChild(pieChart);
+
+    // dont animate piechart atm
+    pausePieChartUpdate();
+  };
+
+  function updatePieChart () {
+    var root = d3.select("sketch")[0][0];
+    pieChart = stage.children[0];
+    if (pieChart && pieChart._animate) {
+      pieChart.update(root);
+    }
+  }
+
+  function pausePieChartUpdate () {
+    pieChart = stage.children[0];
+    if (pieChart) {
+      pieChart.toggleAnimate();
+    }
+  };
+
+  // run the render loop
+  requestAnimFrame(animate);
+
+  renderer.render(stage);
+
+  function animate() {
+    updatePieChart();
+    renderer.render(stage);
+    requestAnimFrame(animate);
+  }
+  </script>
+</body>
+</html>

@@ -1979,3 +1979,84 @@ ChartLib.LineChart = function(element) {
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.LineChart.prototype = Object.create( ChartLib.Basic2AxisChart.prototype );
 ChartLib.LineChart.prototype.constructor = ChartLib.LineChart;
+
+/**
+* Pie Segment
+*/
+ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, color) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+	this.type = "pieSegment";
+
+	this._angle = angle;
+	this._startAngle = startAngle;
+	this._radius = radius;
+	this._center_x = centerX;
+	this._center_y = centerY;
+	this._color = color;
+
+	this.init = function (element) {
+	};
+
+	this.draw = function () {
+		this.beginFill(this._color);
+		this.moveTo(this._center_x, this._center_y);
+		this.arc(this._center_x, this._center_y, this._radius, this._startAngle, this._startAngle + this._angle, false);
+		this.moveTo(this._center_x, this._center_y);
+		this.endFill();
+	}
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.PieSegment.prototype = Object.create( PIXI.Graphics.prototype );
+ChartLib.PieSegment.prototype.constructor = ChartLib.PieSegment;
+
+/**
+* Pie Chart
+*/
+ChartLib.PieChart = function(element) {
+	ChartLib.Basic2AxisChart.apply(this);
+	this.type = "lineChart";
+
+	this.init = function (element) {
+		// call super init
+		this.initDefault(element);
+
+		this._center_x = this._x + this._width/2;
+		this._center_y = this._y + this._height/2;
+
+		if (!this.segmentContainer) {
+			this.segmentContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.segmentContainer);
+
+			var i=0;
+			var startAngle = 0;
+			var color = 0xFF3333;
+			for (var segment = element.firstChild; segment; segment = segment.nextSibling) {
+				var angle = parseFloat(segment.getAttribute("val"));
+				color = color + i*0x003333;
+				var newSegment = new ChartLib.PieSegment(angle, startAngle, this._width/2,
+											this._center_x, this._center_y, color);
+
+				console.log(newSegment);
+				this.segmentContainer.addChild(newSegment);
+
+				startAngle += angle;
+				console.log("startAngle:" + (startAngle * (180/Math.PI)));
+				i++;
+			}
+		}
+	};
+
+	this.draw = function () {
+		for (var i=0; i<this.segmentContainer.children.length; i++) {
+			this.segmentContainer.children[i].draw();
+		}
+	};
+
+	this.init(element);
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.PieChart.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.PieChart.prototype.constructor = ChartLib.PieChart;

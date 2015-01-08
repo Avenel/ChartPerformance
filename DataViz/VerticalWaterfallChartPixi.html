@@ -49,7 +49,7 @@
   w = Math.floor(data.length*pxs*category_w),
   padding = Math.floor(1*pxs),
   transitionDuration = 2000,
-  domainMax = d3.max(data.filter(function(item) {return item.val;})).val;
+  domainMax = d3.max(data.map(function(item) {return item.val;})).val;
 
   var canvas = document.getElementById('chart');
   var options = new function() {

@@ -1744,12 +1744,45 @@ ChartLib.Basic2AxisChart = function (element) {
 			.range( this._range_y);
 
 		// axis ticks
-		var _arguments = [8];
+		var _arguments = [5];
 		this.tickFormat_x = this._axisScale_x.tickFormat.apply(this.scale, _arguments);
 		this.ticks_x = this._axisScale_x.ticks.apply(this._axisScale_x, _arguments);
 
 		this.tickFormat_y = this._axisScale_y.tickFormat.apply(this.scale, _arguments);
 		this.ticks_y = this._axisScale_y.ticks.apply(this._axisScale_y, _arguments);
+
+		// x axis
+		this._axis_x_container = new PIXI.DisplayObjectContainer();
+		var steps = this.ticks_x.length;
+		this.drawRect( this._x_axis_x, this._y_axis_y, this._max_width, this._pxs*0.05)
+		for (var i = 0; i < steps; i++) {
+			this.beginFill(0xCCCCCC);
+			this.drawRect( this._x_axis_x + this._axisScale_x(this.ticks_x[i]), this._y_axis_y, this._pxs*0.1, this._pxs*0.2);
+
+			// add labels
+			var text = new PIXI.Text(this.ticks_x[i], {font: this._pxs + "px sans-serif", fill:"black"});
+			text.position.y = this._y_axis_y + this._pxs*0.2;
+			text.position.x = this._x_axis_x + this._axisScale_x(this.ticks_x[i]) - text.width/2;
+			this._axis_x_container.addChild(text);
+		}
+		this.addChild(this._axis_x_container);
+
+
+		// y axis
+		this._axis_y_container = new PIXI.DisplayObjectContainer();
+		steps = this.ticks_y.length;
+		this.drawRect( this._x_axis_x, this._y_axis_y, this._pxs*0.05, -this._max_height);
+		for (var i = 0; i < steps; i++) {
+			this.beginFill(0xCCCCCC);
+			this.drawRect( this._x_axis_x, this._y_axis_y - this._axisScale_y(this.ticks_y[i]), -this._pxs*0.2, this._pxs*0.1);
+
+			// add labels
+			var text = new PIXI.Text(this.ticks_y[i], {font: this._pxs + "px sans-serif", fill:"black"});
+			text.position.x = this._y_axis_x - this._pxs*0.2 - text.width;
+			text.position.y = this._y_axis_y - this._axisScale_y(this.ticks_y[i]) - text.height/2;
+			this._axis_y_container.addChild(text);
+		}
+		this.addChild(this._axis_y_container);
 
 		console.log(this);
 	}
@@ -1814,6 +1847,7 @@ ChartLib.ScatterPlot = function(element) {
 	};
 
 	this.draw = function () {
+		// axis
 		var i = 0;
 		for (var child = this._element.firstChild; child; child = child.nextSibling) {
 			this.dotContainer.children[i].update();

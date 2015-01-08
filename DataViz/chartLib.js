@@ -1847,7 +1847,7 @@ ChartLib.ScatterPlot = function(element) {
 	};
 
 	this.draw = function () {
-		// axis
+		// draw dots
 		var i = 0;
 		for (var child = this._element.firstChild; child; child = child.nextSibling) {
 			this.dotContainer.children[i].update();
@@ -1861,3 +1861,56 @@ ChartLib.ScatterPlot = function(element) {
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.ScatterPlot.prototype = Object.create( ChartLib.Basic2AxisChart.prototype );
 ChartLib.ScatterPlot.prototype.constructor = ChartLib.ScatterPlot;
+
+/**
+* Linechart
+*/
+ChartLib.LineChart = function(element) {
+	ChartLib.Basic2AxisChart.apply(this);
+	this.type = "lineChart";
+
+	this.init = function (element) {
+		// call super init
+		this.init2AxisChart(element);
+
+		// column container
+		if (!this.dotContainer) {
+			this.dotContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.dotContainer);
+
+			// this.columnContainer.removeChildren();
+			for (var child = element.firstChild; child; child = child.nextSibling) {
+				var x = this._x_axis_x + this._axisScale_x(parseFloat(child.getAttribute("x")));
+				var y = this._y_axis_y - this._axisScale_y(parseFloat(child.getAttribute("y")));
+
+				var dot = new ChartLib.BasicDot(x, y, this._pxs/5);
+				this.dotContainer.addChild(dot);
+			}
+		}
+	};
+
+	this.draw = function () {
+		// draw dots & lines
+		var i = 0;
+		for (var child = this._element.firstChild; child; child = child.nextSibling) {
+			//this.dotContainer.children[i].update();
+			// draw line that connect two dots
+			if (i>0 && i<this.dotContainer.children.length) {
+				this.lineStyle(this._pxs*0.1, 0x000000, 1.0);
+				this.beginFill(0x000000);
+				this.moveTo(this.dotContainer.children[i-1]._x, this.dotContainer.children[i-1]._y);
+				this.lineTo(this.dotContainer.children[i]._x, this.dotContainer.children[i]._y);
+				this.endFill();
+			}
+
+			i++;
+		}
+
+	};
+
+	this.init(element);
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.LineChart.prototype = Object.create( ChartLib.Basic2AxisChart.prototype );
+ChartLib.LineChart.prototype.constructor = ChartLib.LineChart;

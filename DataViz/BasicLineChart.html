@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <title>ScatterPlot</title>
+  <title>Line Chart</title>
   <style>
   body {
     margin: 0;
@@ -20,11 +20,11 @@
   <script>
   // data
   var data = [
-    {"x":10, "y":220},
-    {"x":20,  "y":180},
+    {"x":2,  "y":150},
     {"x":5,  "y":40},
     {"x":7,  "y":80},
-  {"x":7,  "y":150}
+    {"x":10, "y":220},
+    {"x":12,  "y":180},
   ]
 
   // create an new instance of a pixi stage
@@ -66,7 +66,7 @@
   .attr("pxs", pxs)
   .attr("x", padding)
   .attr("y", h-padding)
-  .attr("title", "ExampleScatterPlot")
+  .attr("title", "ExampleLineChart")
   .attr("domain_x_min", 0)
   .attr("domain_x_max", domainMaxX)
   .attr("domain_y_min", 0)
@@ -88,13 +88,13 @@
   })
   .call(addDots);
 
-  var scatterPlot = null;
+  var lineChart = null;
 
   // insert dots onto pixi canvas
   function addDots() {
     var root = d3.select("sketch")[0][0];
-    scatterPlot = new ChartLib.ScatterPlot(root);
-    stage.addChild(scatterPlot);
+    lineChart = new ChartLib.LineChart(root);
+    stage.addChild(lineChart);
 
     // dont animate scatterplot atm.
     pauseDotUpdate();
@@ -102,16 +102,16 @@
 
   function updateDots () {
     var root = d3.select("sketch")[0][0];
-    scatterPlot = stage.children[0];
-    if (scatterPlot && scatterPlot._animate) {
-      scatterPlot.update(root);
+    lineChart = stage.children[0];
+    if (lineChart && lineChart._animate) {
+      lineChart.update(root);
     }
   }
 
   function pauseDotUpdate () {
-    scatterPlot = stage.children[0];
-    if (scatterPlot) {
-      scatterPlot.toggleAnimate();
+    lineChart = stage.children[0];
+    if (lineChart) {
+      lineChart.toggleAnimate();
     }
   };
 

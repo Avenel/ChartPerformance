@@ -1783,8 +1783,6 @@ ChartLib.Basic2AxisChart = function (element) {
 			this._axis_y_container.addChild(text);
 		}
 		this.addChild(this._axis_y_container);
-
-		console.log(this);
 	}
 }
 
@@ -1863,6 +1861,42 @@ ChartLib.ScatterPlot.prototype = Object.create( ChartLib.Basic2AxisChart.prototy
 ChartLib.ScatterPlot.prototype.constructor = ChartLib.ScatterPlot;
 
 /**
+* Simple Line with dots
+*/
+ChartLib.Line = function(dots, color, pxs) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+	this.type = "line";
+
+	this._dots = dots;
+	this._color = color;
+	this._pxs = pxs;
+
+	this.init = function (element) {
+	};
+
+	this.draw = function () {
+		// draw dots & lines
+		for (var i=0; i<this._dots.children.length; i++) {
+			//this.dotContainer.children[i].update();
+			// draw line that connect two dots
+			if (i>0 && i<this._dots.children.length-1) {
+				this.lineStyle(this._pxs*0.1, this._color, 1.0);
+				this.beginFill(this._color);
+				this.moveTo(this._dots.children[i-1]._x, this._dots.children[i-1]._y);
+				this.lineTo(this._dots.children[i]._x, this._dots.children[i]._y);
+				this.endFill();
+			}
+		}
+	}
+
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.Line.prototype = Object.create( PIXI.Graphics.prototype );
+ChartLib.Line.prototype.constructor = ChartLib.Line;
+
+/**
 * Linechart
 */
 ChartLib.LineChart = function(element) {
@@ -1874,36 +1908,33 @@ ChartLib.LineChart = function(element) {
 		this.init2AxisChart(element);
 
 		// column container
-		if (!this.dotContainer) {
-			this.dotContainer = new PIXI.DisplayObjectContainer();
-			this.addChild(this.dotContainer);
+		if (!this.lineContainer) {
+			this.lineContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.lineContainer);
 
-			// this.columnContainer.removeChildren();
-			for (var child = element.firstChild; child; child = child.nextSibling) {
-				var x = this._x_axis_x + this._axisScale_x(parseFloat(child.getAttribute("x")));
-				var y = this._y_axis_y - this._axisScale_y(parseFloat(child.getAttribute("y")));
+			var i=0;
+			for (var line = element.firstChild; line; line = line.nextSibling) {
+				var dotContainer = new PIXI.DisplayObjectContainer();
+				// this.columnContainer.removeChildren();
+				for (var dot = line.firstChild; dot; dot = dot.nextSibling) {
+					var x = this._x_axis_x + this._axisScale_x(parseFloat(dot.getAttribute("x")));
+					var y = this._y_axis_y - this._axisScale_y(parseFloat(dot.getAttribute("y")));
 
-				var dot = new ChartLib.BasicDot(x, y, this._pxs/5);
-				this.dotContainer.addChild(dot);
+					var newDot = new ChartLib.BasicDot(x, y, this._pxs/5);
+					dotContainer.addChild(newDot);
+				}
+
+				var lineColor = i*0x888888;
+				var newLine = new ChartLib.Line(dotContainer, lineColor, this._pxs);
+				this.lineContainer.addChild(newLine);
+				i++;
 			}
 		}
 	};
 
 	this.draw = function () {
-		// draw dots & lines
-		var i = 0;
-		for (var child = this._element.firstChild; child; child = child.nextSibling) {
-			//this.dotContainer.children[i].update();
-			// draw line that connect two dots
-			if (i>0 && i<this.dotContainer.children.length) {
-				this.lineStyle(this._pxs*0.1, 0x000000, 1.0);
-				this.beginFill(0x000000);
-				this.moveTo(this.dotContainer.children[i-1]._x, this.dotContainer.children[i-1]._y);
-				this.lineTo(this.dotContainer.children[i]._x, this.dotContainer.children[i]._y);
-				this.endFill();
-			}
-
-			i++;
+		for (var i=0; i<this.lineContainer.children.length; i++) {
+			this.lineContainer.children[i].draw();
 		}
 
 	};

@@ -20,11 +20,17 @@
   <script>
   // data
   var data = [
-    {"x":2,  "y":150},
-    {"x":5,  "y":40},
-    {"x":7,  "y":80},
-    {"x":10, "y":220},
-    {"x":12,  "y":180},
+    [ {"x":2,  "y":150},
+      {"x":5,  "y":40},
+      {"x":7,  "y":80},
+      {"x":10, "y":220},
+      {"x":12,  "y":180}],
+
+    [ {"x":1,  "y":100},
+      {"x":3,  "y":20},
+      {"x":5,  "y":50},
+      {"x":9, "y":120},
+      {"x":12,  "y":250}]
   ]
 
   // create an new instance of a pixi stage
@@ -38,11 +44,25 @@
   pxs = 16*fs,
   category_w = 1.8,
   w = Math.floor(20*pxs), // 1.8fs = recommended category width
-  h = Math.floor(data.length*pxs*category_w),
+  h = Math.floor(15*pxs),
   padding = Math.floor(1*pxs),
-  transitionDuration = 1000,
-  domainMaxX = d3.max(data.map(function(item) {return item.x;})),
-  domainMaxY = d3.max(data.map(function(item) {return item.y;}));
+  transitionDuration = 1000;
+
+  var domainMaxX = d3.max(data.map(function(item) {
+    return item.map( function(data) {
+      return data.x;
+    });
+  }).map(function(item) {
+    return d3.max(item);
+  }));
+
+  var domainMaxY = d3.max(data.map(function(item) {
+    return item.map( function(data) {
+      return data.y;
+    });
+  }).map(function(item) {
+    return d3.max(item);
+  }));
 
   var canvas = document.getElementById('chart');
   var options = new function() {
@@ -75,32 +95,37 @@
   .attr("max_height", h - (2*padding))
 
   // append bar objects to sketch
-  var dot = sketch.selectAll("dot").data(data);
-  dot.enter()
-  .append( 'dot' )
-  .attr({
-    x: function( d, i ) {
-      return d.x;
-    },
-    y: function ( d, i ) {
-      return d.y;
-    }
-  })
-  .call(addDots);
+  var lines = sketch.selectAll("dot").data(data);
+  lines.enter()
+    .append( 'line' );
+
+
+  var dots = lines.selectAll("line").data(function (d, i, j) { return d;});
+  dots.enter()
+    .append('dot')
+    .attr({
+      x: function( d, i ) {
+        return d.x;
+      },
+      y: function ( d, i ) {
+        return d.y;
+      }
+    })
+    .call(addLines);
 
   var lineChart = null;
 
   // insert dots onto pixi canvas
-  function addDots() {
+  function addLines() {
     var root = d3.select("sketch")[0][0];
     lineChart = new ChartLib.LineChart(root);
     stage.addChild(lineChart);
 
-    // dont animate scatterplot atm.
-    pauseDotUpdate();
+    // dont animate linechart atm.
+    pauseLineUpdate();
   };
 
-  function updateDots () {
+  function updateLines () {
     var root = d3.select("sketch")[0][0];
     lineChart = stage.children[0];
     if (lineChart && lineChart._animate) {
@@ -108,7 +133,7 @@
     }
   }
 
-  function pauseDotUpdate () {
+  function pauseLineUpdate () {
     lineChart = stage.children[0];
     if (lineChart) {
       lineChart.toggleAnimate();
@@ -121,7 +146,7 @@
   renderer.render(stage);
 
   function animate() {
-    updateDots();
+    updateLines();
     renderer.render(stage);
     requestAnimFrame(animate);
   }

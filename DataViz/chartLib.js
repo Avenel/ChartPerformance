@@ -1793,7 +1793,7 @@ ChartLib.Basic2AxisChart.prototype.constructor = ChartLib.Basic2AxisChart;
 /**
 * Basic dot in a scatterplot
 */
-ChartLib.BasicDot = function (x, y, radius) {
+ChartLib.BasicDot = function (x, y, radius, color) {
 	// inherit Pixi.js Graphics object
 	PIXI.Graphics.apply(this, arguments);
 	this.type = "basicDot";
@@ -1801,13 +1801,14 @@ ChartLib.BasicDot = function (x, y, radius) {
 	this._x = x;
 	this._y = y;
 	this._radius = radius;
+	this._color = color;
 
 	this.init = function (element) {
 	};
 
 	this.draw = function () {
 		this.clear();
-		this.beginFill(0x000000);
+		this.beginFill(this._color);
 		this.drawCircle( this._x - (this._radius/2), this._y - (this._radius/2), this._radius);
 		this.endFill();
 	};
@@ -1820,36 +1821,67 @@ ChartLib.BasicDot.prototype.constructor = ChartLib.BasicDot;
 /**
 * Scatterplot - simple
 */
-ChartLib.ScatterPlot = function(element) {
-	ChartLib.Basic2AxisChart.apply(this);
+ChartLib.ScatterPlot = function(dots, color, pxs) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
 	this.type = "scatterPlot";
+
+	this._dots = dots;
+	this.addChild(this._dots);
+	this._color = color;
+	this._pxs = pxs;
+
+	this.init = function (element) {
+	};
+
+	this.draw = function () {
+		// draw dots & lines
+		for (var i=0; i<this._dots.children.length; i++) {
+			this._dots.children[i].update();
+		}
+	}
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.ScatterPlot.prototype = Object.create( PIXI.Graphics.prototype );
+ChartLib.ScatterPlot.prototype.constructor = ChartLib.ScatterPlot;
+
+ChartLib.ScatterPlotChart = function(element) {
+	ChartLib.Basic2AxisChart.apply(this);
+	this.type = "scatterPlotChart";
 
 	this.init = function (element) {
 		// call super init
 		this.init2AxisChart(element);
 
 		// column container
-		if (!this.dotContainer) {
-			this.dotContainer = new PIXI.DisplayObjectContainer();
-			this.addChild(this.dotContainer);
+		if (!this.scatterPlotContainer) {
+			this.scatterPlotContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.scatterPlotContainer);
 
-			// this.columnContainer.removeChildren();
-			for (var child = element.firstChild; child; child = child.nextSibling) {
-				var x = this._x_axis_x + this._axisScale_x(parseFloat(child.getAttribute("x")));
-				var y = this._y_axis_y - this._axisScale_y(parseFloat(child.getAttribute("y")));
+			var i=0;
+			for (var scatterPlot = element.firstChild; scatterPlot; scatterPlot = scatterPlot.nextSibling) {
+				var dotContainer = new PIXI.DisplayObjectContainer();
+				var scatterPlotColor = i*0x888888;
+				for (var dot = scatterPlot.firstChild; dot; dot = dot.nextSibling) {
+					var x = this._x_axis_x + this._axisScale_x(parseFloat(dot.getAttribute("x")));
+					var y = this._y_axis_y - this._axisScale_y(parseFloat(dot.getAttribute("y")));
 
-				var dot = new ChartLib.BasicDot(x, y, this._pxs/5);
-				this.dotContainer.addChild(dot);
+					var newDot = new ChartLib.BasicDot(x, y, this._pxs/5, scatterPlotColor);
+					dotContainer.addChild(newDot);
+				}
+
+				var newScatterPlot = new ChartLib.ScatterPlot(dotContainer, scatterPlotColor, this._pxs);
+				this.scatterPlotContainer.addChild(newScatterPlot);
+				i++;
 			}
 		}
 	};
 
 	this.draw = function () {
-		// draw dots
-		var i = 0;
-		for (var child = this._element.firstChild; child; child = child.nextSibling) {
-			this.dotContainer.children[i].update();
-			i++;
+		// draw scatterPlots
+		for (var i = 0; i<this.scatterPlotContainer.children.length; i++) {
+			this.scatterPlotContainer.children[i].draw();
 		}
 	};
 
@@ -1857,8 +1889,9 @@ ChartLib.ScatterPlot = function(element) {
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.ScatterPlot.prototype = Object.create( ChartLib.Basic2AxisChart.prototype );
-ChartLib.ScatterPlot.prototype.constructor = ChartLib.ScatterPlot;
+ChartLib.ScatterPlotChart.prototype = Object.create( ChartLib.Basic2AxisChart.prototype );
+ChartLib.ScatterPlotChart.prototype.constructor = ChartLib.ScatterPlotChart;
+
 
 /**
 * Simple Line with dots
@@ -1915,16 +1948,17 @@ ChartLib.LineChart = function(element) {
 			var i=0;
 			for (var line = element.firstChild; line; line = line.nextSibling) {
 				var dotContainer = new PIXI.DisplayObjectContainer();
+				var lineColor = i*0x888888;
+
 				// this.columnContainer.removeChildren();
 				for (var dot = line.firstChild; dot; dot = dot.nextSibling) {
 					var x = this._x_axis_x + this._axisScale_x(parseFloat(dot.getAttribute("x")));
 					var y = this._y_axis_y - this._axisScale_y(parseFloat(dot.getAttribute("y")));
 
-					var newDot = new ChartLib.BasicDot(x, y, this._pxs/5);
+					var newDot = new ChartLib.BasicDot(x, y, this._pxs/5, linecolor);
 					dotContainer.addChild(newDot);
 				}
 
-				var lineColor = i*0x888888;
 				var newLine = new ChartLib.Line(dotContainer, lineColor, this._pxs);
 				this.lineContainer.addChild(newLine);
 				i++;

@@ -20,12 +20,18 @@
   <script>
   // data
   var data = [
-    {"x":10, "y":220},
-    {"x":20,  "y":180},
-    {"x":5,  "y":40},
-    {"x":7,  "y":80},
-  {"x":7,  "y":150}
-  ]
+    [ {"x":2,  "y":150},
+      {"x":5,  "y":40},
+      {"x":7,  "y":80},
+      {"x":10, "y":220},
+      {"x":12,  "y":180}],
+
+    [ {"x":1,  "y":100},
+      {"x":3,  "y":20},
+      {"x":5,  "y":50},
+      {"x":9, "y":120},
+      {"x":12,  "y":250}]
+  ];
 
   // create an new instance of a pixi stage
   var stage = new PIXI.Stage(0xFFFFFF, true);
@@ -38,11 +44,25 @@
   pxs = 16*fs,
   category_w = 1.8,
   w = Math.floor(20*pxs), // 1.8fs = recommended category width
-  h = Math.floor(data.length*pxs*category_w),
+  h = Math.floor(15*pxs),
   padding = Math.floor(1*pxs),
-  transitionDuration = 1000,
-  domainMaxX = d3.max(data.map(function(item) {return item.x;})),
-  domainMaxY = d3.max(data.map(function(item) {return item.y;}));
+  transitionDuration = 1000;
+
+  var domainMaxX = d3.max(data.map(function(item) {
+    return item.map( function(data) {
+      return data.x;
+    });
+  }).map(function(item) {
+    return d3.max(item);
+  }));
+
+  var domainMaxY = d3.max(data.map(function(item) {
+    return item.map( function(data) {
+      return data.y;
+    });
+  }).map(function(item) {
+    return d3.max(item);
+  }));
 
   var canvas = document.getElementById('chart');
   var options = new function() {
@@ -74,44 +94,49 @@
   .attr("max_width", w - (2*padding))
   .attr("max_height", h - (2*padding))
 
-  // append bar objects to sketch
-  var dot = sketch.selectAll("dot").data(data);
-  dot.enter()
-  .append( 'dot' )
-  .attr({
-    x: function( d, i ) {
-      return d.x;
-    },
-    y: function ( d, i ) {
-      return d.y;
-    }
-  })
-  .call(addDots);
+  var scatterPlot = sketch.selectAll("scatterPlot").data(data);
+  scatterPlot.enter()
+    .append( 'scatterPlot' );
 
-  var scatterPlot = null;
+
+  // append bar objects to sketch
+  var dot = scatterPlot.selectAll("scatterPlot").data(function (d, i, j) { return d;});
+    dot.enter()
+    .append( 'dot' )
+    .attr({
+      x: function( d, i ) {
+        return d.x;
+      },
+      y: function ( d, i ) {
+        return d.y;
+      }
+    })
+    .call(addScatterPlotChart);
+
+  var scatterPlotChart = null;
 
   // insert dots onto pixi canvas
-  function addDots() {
+  function addScatterPlotChart() {
     var root = d3.select("sketch")[0][0];
-    scatterPlot = new ChartLib.ScatterPlot(root);
-    stage.addChild(scatterPlot);
+    scatterPlotChart = new ChartLib.ScatterPlotChart(root);
+    stage.addChild(scatterPlotChart);
 
     // dont animate scatterplot atm.
-    pauseDotUpdate();
+    pauseScatterPlotChartUpdate();
   };
 
-  function updateDots () {
+  function updateScatterPlotChart () {
     var root = d3.select("sketch")[0][0];
-    scatterPlot = stage.children[0];
-    if (scatterPlot && scatterPlot._animate) {
-      scatterPlot.update(root);
+    scatterPlotChart = stage.children[0];
+    if (scatterPlotChart && scatterPlotChart._animate) {
+      scatterPlotChart.update(root);
     }
   }
 
-  function pauseDotUpdate () {
-    scatterPlot = stage.children[0];
-    if (scatterPlot) {
-      scatterPlot.toggleAnimate();
+  function pauseScatterPlotChartUpdate () {
+    scatterPlotChart = stage.children[0];
+    if (scatterPlotChart) {
+      scatterPlotChart.toggleAnimate();
     }
   };
 
@@ -121,7 +146,7 @@
   renderer.render(stage);
 
   function animate() {
-    updateDots();
+    updateScatterPlotChart();
     renderer.render(stage);
     requestAnimFrame(animate);
   }

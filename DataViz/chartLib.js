@@ -1955,7 +1955,7 @@ ChartLib.LineChart = function(element) {
 					var x = this._x_axis_x + this._axisScale_x(parseFloat(dot.getAttribute("x")));
 					var y = this._y_axis_y - this._axisScale_y(parseFloat(dot.getAttribute("y")));
 
-					var newDot = new ChartLib.BasicDot(x, y, this._pxs/5, linecolor);
+					var newDot = new ChartLib.BasicDot(x, y, this._pxs/5, lineColor);
 					dotContainer.addChild(newDot);
 				}
 

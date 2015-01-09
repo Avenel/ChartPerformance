@@ -1983,7 +1983,7 @@ ChartLib.LineChart.prototype.constructor = ChartLib.LineChart;
 /**
 * Pie Segment
 */
-ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, color, pxs) {
+ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, color, pxs, centerPadding) {
 	// inherit Pixi.js Graphics object
 	PIXI.Graphics.apply(this, arguments);
 	this.type = "pieSegment";
@@ -1995,6 +1995,9 @@ ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, colo
 	this._center_y = centerY;
 	this._color = color;
 	this._pxs = pxs;
+
+	// centerPadding
+	this._cp = centerPadding;
 
 	this.init = function (element) {
 	};
@@ -2010,13 +2013,13 @@ ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, colo
 
 		// width at radius/2
 		var angleWidthX = 	Math.abs(
-													Math.cos(this._startAngle)*(this._radius/2) -
-													Math.cos(this._startAngle + this._angle)*(this._radius/2)
+													Math.cos(this._startAngle)*(this._radius*this._cp) -
+													Math.cos(this._startAngle + this._angle)*(this._radius*this._cp)
 												);
 
 		var angleWidthY = 	Math.abs(
-													Math.sin(this._startAngle)*(this._radius/2) -
-													Math.sin(this._startAngle + this._angle)*(this._radius/2)
+													Math.sin(this._startAngle)*(this._radius*this._cp) -
+													Math.sin(this._startAngle + this._angle)*(this._radius*this._cp)
 												);
 
 		var angleWidthDiag = Math.sqrt(angleWidthX*angleWidthX + angleWidthY*angleWidthY);
@@ -2027,29 +2030,29 @@ ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, colo
 			// southeast
 			case 0:
 				if (text.width < angleWidthDiag && text.height < this._radius ) {
-					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)/2) - text.width/2;
-					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)/2) - this._radius/6;
+					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)*this._cp);
+					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)*this._cp);
 				}
 				break;
 			// southwest
 			case 1:
 				if (text.width < angleWidthDiag && text.height < this._radius ) {
-					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)/2) - text.width/2;
-					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)/2) - this._radius/6;
+					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)*this._cp);
+					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)*this._cp);
 				}
 				break;
 			// nordwest
 			case 2:
 				if (text.width < this._radius && text.height < angleWidthY ) {
-					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)/2) - text.width/2;
-					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)/2) - text.height/2;
+					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius + text.width/2)*this._cp);
+					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius + text.height)*this._cp);
 				}
 				break;
 			// nordeast
 			case 3:
 				if (text.width < this._radius && text.height < angleWidthY ) {
-					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)/2) - this._radius/6;
-					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)/2) - text.height/2;
+					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius )*this._cp);
+					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius + text.height)*this._cp);
 				}
 				break;
 			default:
@@ -2068,8 +2071,8 @@ ChartLib.PieSegment.prototype.constructor = ChartLib.PieSegment;
 * Pie Chart
 */
 ChartLib.PieChart = function(element) {
-	ChartLib.Basic2AxisChart.apply(this);
-	this.type = "lineChart";
+	ChartLib.BasicChart.apply(this);
+	this.type = "donutChart";
 
 	this.init = function (element) {
 		// call super init
@@ -2096,7 +2099,7 @@ ChartLib.PieChart = function(element) {
 				color = color + i*0x003333;
 
 				var newSegment = new ChartLib.PieSegment(angle, startAngle, this.radius,
-											this._center_x, this._center_y, color, this._pxs);
+											this._center_x, this._center_y, color, this._pxs, 0.75);
 
 				this.segmentContainer.addChild(newSegment);
 				startAngle += angle;
@@ -2117,3 +2120,60 @@ ChartLib.PieChart = function(element) {
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.PieChart.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.PieChart.prototype.constructor = ChartLib.PieChart;
+
+ChartLib.DonutChart = function(element) {
+	ChartLib.BasicChart.apply(this);
+	this.type = "donutChart";
+
+	this.init = function(element) {
+		// call super init
+		this.initDefault(element);
+
+		this._max_width = parseFloat(element.getAttribute("max_width"))*this._scale;
+		this._max_height = parseFloat(element.getAttribute("max_height"))*this._scale;
+
+		this._center_x = (this._x + (this._width/2)) * this._scale;
+		this._center_y = (this._y + (this._height/2)) * this._scale;
+
+		this.radius = d3.min([this._max_width, this._max_height])/2;
+
+		if (!this.segmentContainer) {
+			this.segmentContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.segmentContainer);
+
+			var i=0;
+			var startAngle = 0;
+			var color = 0xFF3333;
+
+			for (var segment = element.firstChild; segment; segment = segment.nextSibling) {
+				var angle = parseFloat(segment.getAttribute("val"));
+				color = color + i*0x003333;
+
+				var newSegment = new ChartLib.PieSegment(angle, startAngle, this.radius,
+					this._center_x, this._center_y, color, this._pxs, 0.75);
+
+				this.segmentContainer.addChild(newSegment);
+				startAngle += angle;
+				i++;
+			}
+
+			// donut hole
+			var color = 0xFFFFFF;
+			var newSegment = new ChartLib.PieSegment(2*Math.PI, 0, this.radius/2,
+					this._center_x, this._center_y, color, this._pxs, 0);
+			this.segmentContainer.addChild(newSegment);
+		}
+	};
+
+	this.draw = function () {
+		for (var i=0; i<this.segmentContainer.children.length; i++) {
+			this.segmentContainer.children[i].draw();
+		}
+	};
+
+	this.init(element);
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.DonutChart.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.DonutChart.prototype.constructor = ChartLib.DonutChart;

@@ -1983,7 +1983,7 @@ ChartLib.LineChart.prototype.constructor = ChartLib.LineChart;
 /**
 * Pie Segment
 */
-ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, color) {
+ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, color, pxs) {
 	// inherit Pixi.js Graphics object
 	PIXI.Graphics.apply(this, arguments);
 	this.type = "pieSegment";
@@ -1994,6 +1994,7 @@ ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, colo
 	this._center_x = centerX;
 	this._center_y = centerY;
 	this._color = color;
+	this._pxs = pxs;
 
 	this.init = function (element) {
 	};
@@ -2022,11 +2023,9 @@ ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, colo
 
 		var textAngle = this._startAngle + (this._angle / 2);
 		var quarter = Math.floor(textAngle / (Math.PI/2));
-		console.log(quarter);
 		switch(quarter) {
 			// southeast
 			case 0:
-				console.log(text.width, angleWidthDiag);
 				if (text.width < angleWidthDiag && text.height < this._radius ) {
 					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)/2) - text.width/2;
 					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)/2) - this._radius/6;
@@ -2042,7 +2041,7 @@ ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, colo
 			// nordwest
 			case 2:
 				if (text.width < this._radius && text.height < angleWidthY ) {
-					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)/2) - text.width/2 - this._radius/10;
+					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)/2) - text.width/2;
 					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)/2) - text.height/2;
 				}
 				break;
@@ -2097,7 +2096,7 @@ ChartLib.PieChart = function(element) {
 				color = color + i*0x003333;
 
 				var newSegment = new ChartLib.PieSegment(angle, startAngle, this.radius,
-											this._center_x, this._center_y, color);
+											this._center_x, this._center_y, color, this._pxs);
 
 				this.segmentContainer.addChild(newSegment);
 				startAngle += angle;

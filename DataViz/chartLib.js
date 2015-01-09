@@ -2121,6 +2121,9 @@ ChartLib.PieChart = function(element) {
 ChartLib.PieChart.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.PieChart.prototype.constructor = ChartLib.PieChart;
 
+/**
+* Donut Chart. Hole-radius is 1/2 of full radius
+*/
 ChartLib.DonutChart = function(element) {
 	ChartLib.BasicChart.apply(this);
 	this.type = "donutChart";
@@ -2177,3 +2180,29 @@ ChartLib.DonutChart = function(element) {
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.DonutChart.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.DonutChart.prototype.constructor = ChartLib.DonutChart;
+
+/**
+* Treemap
+*/
+ChartLib.TreeMap = function(element) {
+	ChartLib.BasicChart.apply(this);
+	this.type = "donutChart";
+
+	this.init = function(element) {
+		// call super init
+		this.initDefault(element);
+
+		this._max_width = parseFloat(element.getAttribute("max_width"))*this._scale;
+		this._max_height = parseFloat(element.getAttribute("max_height"))*this._scale;
+	};
+
+	this.draw = function() {
+
+	};
+
+	this.init(element);
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.TreeMap.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.TreeMap.prototype.constructor = ChartLib.TreeMap;

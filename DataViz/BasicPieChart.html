@@ -20,7 +20,7 @@
   <script>
   // data
   var data = [
-    190, 230, 90, 30, 86
+    250, 20, 10, 123, 19
   ];
 
   // create an new instance of a pixi stage
@@ -33,8 +33,8 @@
   // 1em = 16px (default browser value)
   pxs = 16*fs,
   category_w = 1.8,
-  w = Math.floor(40*pxs), // 1.8fs = recommended category width
-  h = Math.floor(40*pxs),
+  w = Math.floor(5*pxs), // 1.8fs = recommended category width
+  h = Math.floor(5*pxs),
   padding = Math.floor(1*pxs),
   transitionDuration = 1000;
 
@@ -44,6 +44,7 @@
   var options = new function() {
     this.transparent = false;
     this.view = canvas;
+    this.antialias = true;
   }
 
   var renderer = PIXI.autoDetectRecommendedRenderer(w*scale, h*scale, options);
@@ -60,8 +61,8 @@
   .attr("height", h)
   .attr("scale", scale)
   .attr("pxs", pxs)
-  .attr("x", padding)
-  .attr("y", padding)
+  .attr("x", 0)
+  .attr("y", 0)
   .attr("title", "ExamplePieChart")
   .attr("domain_sum", domainSum)
   .attr("max_width", w - (2*padding))
@@ -73,8 +74,8 @@
     .append('segment')
     .attr({
       val: function (d, i) {
-        console.log((d/domainSum) *  2 * Math.PI);
-        return (d/domainSum) *  2 * Math.PI;
+        var angle = (d/domainSum) *  2 * Math.PI;
+        return angle;
       }
     })
     .call(addPie);

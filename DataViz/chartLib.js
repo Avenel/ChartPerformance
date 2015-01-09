@@ -2001,9 +2001,63 @@ ChartLib.PieSegment = function(angle, startAngle, radius, centerX, centerY, colo
 	this.draw = function () {
 		this.beginFill(this._color);
 		this.moveTo(this._center_x, this._center_y);
-		this.arc(this._center_x, this._center_y, this._radius, this._startAngle, this._startAngle + this._angle, false);
-		this.moveTo(this._center_x, this._center_y);
+		this.arc(	this._center_x, this._center_y, this._radius, this._startAngle, this._startAngle + this._angle);
 		this.endFill();
+
+		// text
+		var text = new PIXI.Text(Math.floor(this._angle * (180/Math.PI) / 360 * 100) + "%", {font: this._pxs + "px sans-serif", fill:"white"});
+
+		// width at radius/2
+		var angleWidthX = 	Math.abs(
+													Math.cos(this._startAngle)*(this._radius/2) -
+													Math.cos(this._startAngle + this._angle)*(this._radius/2)
+												);
+
+		var angleWidthY = 	Math.abs(
+													Math.sin(this._startAngle)*(this._radius/2) -
+													Math.sin(this._startAngle + this._angle)*(this._radius/2)
+												);
+
+		var angleWidthDiag = Math.sqrt(angleWidthX*angleWidthX + angleWidthY*angleWidthY);
+
+		var textAngle = this._startAngle + (this._angle / 2);
+		var quarter = Math.floor(textAngle / (Math.PI/2));
+		console.log(quarter);
+		switch(quarter) {
+			// southeast
+			case 0:
+				console.log(text.width, angleWidthDiag);
+				if (text.width < angleWidthDiag && text.height < this._radius ) {
+					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)/2) - text.width/2;
+					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)/2) - this._radius/6;
+				}
+				break;
+			// southwest
+			case 1:
+				if (text.width < angleWidthDiag && text.height < this._radius ) {
+					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)/2) - text.width/2;
+					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)/2) - this._radius/6;
+				}
+				break;
+			// nordwest
+			case 2:
+				if (text.width < this._radius && text.height < angleWidthY ) {
+					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)/2) - text.width/2 - this._radius/10;
+					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)/2) - text.height/2;
+				}
+				break;
+			// nordeast
+			case 3:
+				if (text.width < this._radius && text.height < angleWidthY ) {
+					text.position.x = this._center_x + Math.cos(textAngle)*((this._radius)/2) - this._radius/6;
+					text.position.y = this._center_y + Math.sin(textAngle)*((this._radius)/2) - text.height/2;
+				}
+				break;
+			default:
+				break;
+		}
+
+		this.addChild(text);
 	}
 }
 
@@ -2022,8 +2076,13 @@ ChartLib.PieChart = function(element) {
 		// call super init
 		this.initDefault(element);
 
-		this._center_x = this._x + this._width/2;
-		this._center_y = this._y + this._height/2;
+		this._max_width = parseFloat(element.getAttribute("max_width"))*this._scale;
+		this._max_height = parseFloat(element.getAttribute("max_height"))*this._scale;
+
+		this._center_x = (this._x + (this._width/2)) * this._scale;
+		this._center_y = (this._y + (this._height/2)) * this._scale;
+
+		this.radius = d3.min([this._max_width, this._max_height])/2;
 
 		if (!this.segmentContainer) {
 			this.segmentContainer = new PIXI.DisplayObjectContainer();
@@ -2032,17 +2091,16 @@ ChartLib.PieChart = function(element) {
 			var i=0;
 			var startAngle = 0;
 			var color = 0xFF3333;
+
 			for (var segment = element.firstChild; segment; segment = segment.nextSibling) {
 				var angle = parseFloat(segment.getAttribute("val"));
 				color = color + i*0x003333;
-				var newSegment = new ChartLib.PieSegment(angle, startAngle, this._width/2,
+
+				var newSegment = new ChartLib.PieSegment(angle, startAngle, this.radius,
 											this._center_x, this._center_y, color);
 
-				console.log(newSegment);
 				this.segmentContainer.addChild(newSegment);
-
 				startAngle += angle;
-				console.log("startAngle:" + (startAngle * (180/Math.PI)));
 				i++;
 			}
 		}

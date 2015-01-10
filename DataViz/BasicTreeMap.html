@@ -18,10 +18,7 @@
 <body>
   <canvas id="chart"></canvas>
   <script>
-  // data
-  var data = [
-    250, 20, 10, 123, 19
-  ];
+  // data - here: using an external json file.
 
   // create an new instance of a pixi stage
   var stage = new PIXI.Stage(0xFFFFFF, true);
@@ -36,9 +33,7 @@
   w = Math.floor(80*pxs), // 1.8fs = recommended category width
   h = Math.floor(40*pxs),
   padding = Math.floor(1*pxs),
-  transitionDuration = 1000,
-  max_width = w - (2*padding),
-  max_height = h - (2*padding);
+  transitionDuration = 1000;
 
   var domainSum = d3.sum(data);
 
@@ -56,6 +51,8 @@
   d3.select("body").append("custom:renderer")
   .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
 
+  var max_width = w - (2*padding),
+      max_height = h - (2*padding);
 
   // Add our "custom" sketch element to the body.
   var sketch = d3.select("body").append("cxustom:sketch")

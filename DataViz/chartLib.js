@@ -2201,15 +2201,16 @@ ChartLib.TreemapNode = function(name, x, y, width, height, color, pxs) {
 	};
 
 	this.draw = function() {
+		// only parent nodes got a color, so children have to be transparent
 		this._color ? this.beginFill(this._color) : this.beginFill(0x000000, 0.0);
-		this.lineStyle(1, 0xFFFFFF, 0.6);
+		this.lineStyle(1, 0xFFFFFF, 0.3);
 		this.drawRect(this._x, this._y, this._width, this._height);
 		this.endFill();
 
 		// label
 		if (name) {
 			var text = new PIXI.Text(this._name, {font: this._pxs*0.5 + "px sans-serif", fill:"black"});
-			if (text.width < this._width) {
+			if (text.width < this._width && text.height < this._height - this._pxs) {
 				text.position.x = this._x + this._pxs*0.1;
 				text.position.y = this._y + this._pxs*0.1;
 				this.addChild(text);
@@ -2233,8 +2234,7 @@ ChartLib.Treemap = function(element) {
 		// call super init
 		this.initDefault(element);
 
-		this._max_width = parseFloat(element.getAttribute("max_width"))*this._scale;
-		this._max_height = parseFloat(element.getAttribute("max_height"))*this._scale;
+		console.log(this._pxs, this._scale);
 
 		if (!this.nodeContainer) {
 			this.nodeContainer = new PIXI.DisplayObjectContainer();

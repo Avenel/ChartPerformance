@@ -2324,6 +2324,8 @@ ChartLib.Heatmap = function(element) {
 			var cellCount = element.children.length;
 			var cellSize = (this._max_width*this._max_height) / cellCount;
 			var cellRatio = parseFloat(element.getAttribute("cell_ratio"));
+
+			// atm ignoring cellRatio
 			var cellWidth = Math.sqrt(cellSize);
 			var cellHeight = Math.sqrt(cellSize);
 

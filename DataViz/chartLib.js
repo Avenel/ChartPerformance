@@ -2234,8 +2234,6 @@ ChartLib.Treemap = function(element) {
 		// call super init
 		this.initDefault(element);
 
-		console.log(this._pxs, this._scale);
-
 		if (!this.nodeContainer) {
 			this.nodeContainer = new PIXI.DisplayObjectContainer();
 			this.addChild(this.nodeContainer);
@@ -2266,3 +2264,95 @@ ChartLib.Treemap = function(element) {
 // Set prototype object to the accordinate Pixi.js Graphics object
 ChartLib.Treemap.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.Treemap.prototype.constructor = ChartLib.Treemap;
+
+/**
+* Heatmap node - a rect in a heatmap, its color represents its value
+*/
+ChartLib.HeatmapNode = function(value, x, y, width, height, color) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+	this.type = "heatmapNode";
+
+	this._value = value;
+	this._x = x;
+	this._y = y;
+	this._width = width;
+	this._height = height;
+	this._color = color;
+
+	this.init = function () {
+
+	};
+
+	this.draw = function () {
+		this.clear();
+		this.beginFill(this._color);
+		this.lineStyle(3, 0xFFFFFF, 0.3);
+		this.drawRect(this._x, this._y, this._width, this._height);
+		this.endFill();
+	};
+
+	this.update = function(color) {
+		this._color = color;
+		this.draw();
+	}
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.HeatmapNode.prototype = Object.create( PIXI.Graphics.prototype );
+ChartLib.HeatmapNode.prototype.constructor = ChartLib.HeatmapNode;
+
+/**
+* Heatmap, using treemap nodes
+*/
+ChartLib.Heatmap = function(element) {
+	ChartLib.BasicChart.apply(this);
+	this.type = "heatmap";
+
+	this.init = function(element) {
+		// call super init
+		this.initDefault(element);
+
+		if (!this.nodeContainer) {
+			this.nodeContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.nodeContainer);
+
+			// calc grid size
+			this._max_width = parseFloat(element.getAttribute("max_width")) * this._scale;
+			this._max_height = parseFloat(element.getAttribute("max_height")) * this._scale;
+
+			var cellCount = element.children.length;
+			var cellSize = (this._max_width*this._max_height) / cellCount;
+			var cellRatio = parseFloat(element.getAttribute("cell_ratio"));
+			var cellWidth = Math.sqrt(cellSize);
+			var cellHeight = Math.sqrt(cellSize);
+
+			for (var node = element.firstChild; node; node = node.nextSibling) {
+				var x = parseFloat(node.getAttribute("x")) * cellWidth;
+				var y = parseFloat(node.getAttribute("y")) * cellHeight;
+				var width = cellWidth;
+				var height = cellHeight;
+				var color = parseInt(node.getAttribute("fill").replace("#", "0x"));
+				var value = node.getAttribute("value");
+
+				var heatmapNode = new ChartLib.HeatmapNode(value, x, y, width, height, color);
+				this.nodeContainer.addChild(heatmapNode);
+			}
+		}
+	};
+
+	this.draw = function() {
+		var i=0;
+		for (var node = element.firstChild; node; node = node.nextSibling) {
+			var color = parseInt(node.getAttribute("fill").replace("#", "0x"));
+			this.nodeContainer.children[i].update(color);
+			i++;
+		}
+	};
+
+	this.init(element);
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.Heatmap.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.Heatmap.prototype.constructor = ChartLib.Heatmap;

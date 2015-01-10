@@ -30,8 +30,8 @@
   // 1em = 16px (default browser value)
   pxs = 16*fs,
   category_w = 1.8,
-  w = Math.floor(80*pxs), // 1.8fs = recommended category width
-  h = Math.floor(40*pxs),
+  w = Math.floor(60*pxs), // 1.8fs = recommended category width
+  h = Math.floor(20*pxs),
   padding = Math.floor(1*pxs),
   transitionDuration = 1000;
 
@@ -60,59 +60,52 @@
   .attr("pxs", pxs)
   .attr("x", 0)
   .attr("y", 0)
-  .attr("title", "ExampleTreemap")
+  .attr("title", "ExampleHeatmap")
   .attr("max_width", max_width)
   .attr("max_height", max_height)
+  .attr("cell_ratio", 0.5); // cellRatio: 0..1, determines width/height ratio
 
   // colors
-  var color = d3.scale.category20c();
+  var colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"];
+  var days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+  var times = ["1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12a", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12p"];
+  var buckets = 9;
 
-  // setup d3js treemap layout
-  var treemap = d3.layout.treemap()
-    .size([max_width, max_height])
-    .sticky(true)
-    .value(function(d) { return d.size; });
+  var data_length = 0;
 
-  // load data into treemap
-  d3.json("flare.json", function(error, root) {
-    var node = sketch.datum(root).selectAll(".node")
-    .data(treemap.nodes)
-    .enter().append("node")
-    .call(position)
-    .attr("background", function(d) { return d.children ? color(d.name).replace("#", "0x") : null; })
-    .attr("name", function(d) { return d.children ? null : d.name; })
-    .call(addTreemap);
+  d3.tsv("heatmapData.tsv",
+  function(d) {
+    return {
+      day: +d.day,
+      hour: +d.hour,
+      value: +d.value
+    };
+  },
+  function(error, data) {
+    data_length = data.length;
+    var colorScale = d3.scale.quantile()
+    .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
+    .range(colors);
 
-    d3.selectAll("input").on("change", function change() {
-      var value = this.value === "count"
-        ? function() { return 1; }
-        : function(d) { return d.size; };
+    var heatMap = sketch.selectAll("node")
+      .data(data)
+      .enter().append("node")
+      .attr("x", function(d) { return (d.hour - 1) })
+      .attr("y", function(d) { return (d.day - 1); })
+      .attr("fill", function(d) { return colors[0]; })
+      .call(addTreemap);
 
-      node
-        .data(treemap.value(value).nodes)
-        .transition()
-        .duration(1500)
-        .call(position);
-    });
+    heatMap.transition().duration(1000)
+      .attr("fill", function(d) { return colorScale(d.value); })
+      .each("end", pauseTreemapChartUpdate);
   });
-
-  // calc position of node in treemap
-  function position() {
-    this.attr("left", function(d) { return d.x + padding + "px"; })
-    .attr("top", function(d) { return d.y + padding + "px"; })
-    .attr("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
-    .attr("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
-  }
 
   var treemapChart = null;
 
   function addTreemap() {
     var root = d3.select("sketch")[0][0];
-    treemapChart = new ChartLib.Treemap(root);
+    treemapChart = new ChartLib.Heatmap(root);
     stage.addChild(treemapChart);
-
-    // dont animate treemap atm
-    pauseTreemapChartUpdate();
   };
 
   function updateTreemapChart () {
@@ -123,10 +116,12 @@
     }
   }
 
-  function pauseTreemapChartUpdate () {
+  function pauseTreemapChartUpdate (d, i) {
     treemapChart = stage.children[0];
-    if (treemapChart) {
-      treemapChart.toggleAnimate();
+    if (i==data_length-1) {
+      if (treemapChart) {
+        treemapChart.toggleAnimate();
+      }
     }
   };
 

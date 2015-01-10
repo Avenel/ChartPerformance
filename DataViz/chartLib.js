@@ -2182,11 +2182,52 @@ ChartLib.DonutChart.prototype = Object.create( ChartLib.BasicChart.prototype );
 ChartLib.DonutChart.prototype.constructor = ChartLib.DonutChart;
 
 /**
+* Treemap node (simple, colored rectangle)
+*/
+ChartLib.TreemapNode = function(name, x, y, width, height, color, pxs) {
+	// inherit Pixi.js Graphics object
+	PIXI.Graphics.apply(this, arguments);
+	this.type = "treemapNode";
+
+	this._name = name;
+	this._x = x;
+	this._y = y;
+	this._width = width;
+	this._height = height;
+	this._color = color;
+	this._pxs = pxs;
+
+	this.init = function() {
+	};
+
+	this.draw = function() {
+		this._color ? this.beginFill(this._color) : this.beginFill(0x000000, 0.0);
+		this.lineStyle(1, 0xFFFFFF, 0.6);
+		this.drawRect(this._x, this._y, this._width, this._height);
+		this.endFill();
+
+		// label
+		if (name) {
+			var text = new PIXI.Text(this._name, {font: this._pxs*0.5 + "px sans-serif", fill:"black"});
+			if (text.width < this._width) {
+				text.position.x = this._x + this._pxs*0.1;
+				text.position.y = this._y + this._pxs*0.1;
+				this.addChild(text);
+			}
+		}
+	};
+}
+
+// Set prototype object to the accordinate Pixi.js Graphics object
+ChartLib.TreemapNode.prototype = Object.create( PIXI.Graphics.prototype );
+ChartLib.TreemapNode.prototype.constructor = ChartLib.TreemapNode;
+
+/**
 * Treemap
 */
-ChartLib.TreeMap = function(element) {
+ChartLib.Treemap = function(element) {
 	ChartLib.BasicChart.apply(this);
-	this.type = "donutChart";
+	this.type = "treemap";
 
 	this.init = function(element) {
 		// call super init
@@ -2194,15 +2235,34 @@ ChartLib.TreeMap = function(element) {
 
 		this._max_width = parseFloat(element.getAttribute("max_width"))*this._scale;
 		this._max_height = parseFloat(element.getAttribute("max_height"))*this._scale;
+
+		if (!this.nodeContainer) {
+			this.nodeContainer = new PIXI.DisplayObjectContainer();
+			this.addChild(this.nodeContainer);
+
+			for (var node = element.firstChild; node; node = node.nextSibling) {
+				var x = parseFloat(node.getAttribute("left")) * this._scale;
+				var y = parseFloat(node.getAttribute("top")) * this._scale;
+				var width = parseFloat(node.getAttribute("width")) * this._scale;
+				var height = parseFloat(node.getAttribute("height")) * this._scale;
+				var color = parseInt(node.getAttribute("background"));
+				var name = node.getAttribute("name");
+
+				var treemapNode = new ChartLib.TreemapNode(name, x, y, width, height, color, this._pxs);
+				this.nodeContainer.addChild(treemapNode);
+			}
+		}
 	};
 
 	this.draw = function() {
-
+		for (var i=0; i<this.nodeContainer.children.length; i++) {
+			this.nodeContainer.children[i].draw();
+		}
 	};
 
 	this.init(element);
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.TreeMap.prototype = Object.create( ChartLib.BasicChart.prototype );
-ChartLib.TreeMap.prototype.constructor = ChartLib.TreeMap;
+ChartLib.Treemap.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.Treemap.prototype.constructor = ChartLib.Treemap;

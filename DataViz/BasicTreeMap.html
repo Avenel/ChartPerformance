@@ -1,0 +1,151 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>TreeMap Chart</title>
+  <style>
+  body {
+    margin: 0;
+    background-color: #FFFFFF;
+  }
+  </style>
+
+  <script src="d3.v3.min.js"></script>
+  <script src="pixi.dev.js"></script>
+  <script src="chartLib.js"></script>
+  <!-- <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script> -->
+
+</head>
+<body>
+  <canvas id="chart"></canvas>
+  <script>
+  // data
+  var data = [
+    250, 20, 10, 123, 19
+  ];
+
+  // create an new instance of a pixi stage
+  var stage = new PIXI.Stage(0xFFFFFF, true);
+
+  // for retina displays its important to consider the devicePixelRatio...
+  var scale = window.devicePixelRatio;
+  var // 1 fontsize in em for ibcs standard measure
+  fs = 1.0, // 1fs / [em]
+  // 1em = 16px (default browser value)
+  pxs = 16*fs,
+  category_w = 1.8,
+  w = Math.floor(80*pxs), // 1.8fs = recommended category width
+  h = Math.floor(40*pxs),
+  padding = Math.floor(1*pxs),
+  transitionDuration = 1000,
+  max_width = w - (2*padding),
+  max_height = h - (2*padding);
+
+  var domainSum = d3.sum(data);
+
+  var canvas = document.getElementById('chart');
+  var options = new function() {
+    this.transparent = false;
+    this.view = canvas;
+    this.antialias = true;
+  }
+
+  var renderer = PIXI.autoDetectRecommendedRenderer(w*scale, h*scale, options);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+
+  d3.select("body").append("custom:renderer")
+  .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
+
+
+  // Add our "custom" sketch element to the body.
+  var sketch = d3.select("body").append("cxustom:sketch")
+  .attr("width", w)
+  .attr("height", h)
+  .attr("scale", scale)
+  .attr("pxs", pxs)
+  .attr("x", 0)
+  .attr("y", 0)
+  .attr("title", "ExampleTreemap")
+  .attr("domain_sum", domainSum)
+  .attr("max_width", max_width)
+  .attr("max_height", max_height)
+
+  // colors
+  var color = d3.scale.category20c();
+
+  // setup d3js treemap layout
+  var treemap = d3.layout.treemap()
+    .size([max_width, max_height])
+    .sticky(true)
+    .value(function(d) { return d.size; });
+
+  // load data into treemap
+  d3.json("flare.json", function(error, root) {
+    var node = sketch.datum(root).selectAll(".node")
+    .data(treemap.nodes)
+    .enter().append("node")
+    .call(position)
+    .attr("background", function(d) { return d.children ? color(d.name).replace("#", "0x") : null; })
+    .attr("name", function(d) { return d.children ? null : d.name; })
+    .call(addTreemap);
+
+    d3.selectAll("input").on("change", function change() {
+      var value = this.value === "count"
+      ? function() { return 1; }
+      : function(d) { return d.size; };
+
+      node
+      .data(treemap.value(value).nodes)
+      .transition()
+      .duration(1500)
+      .call(position);
+    });
+  });
+
+  // calc position of node in treemap
+  function position() {
+    this.attr("left", function(d) { return d.x + padding + "px"; })
+    .attr("top", function(d) { return d.y + padding + "px"; })
+    .attr("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
+    .attr("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
+  }
+
+  var treemapChart = null;
+
+  function addTreemap() {
+    var root = d3.select("sketch")[0][0];
+    treemapChart = new ChartLib.Treemap(root);
+    stage.addChild(treemapChart);
+
+    // dont animate treemap atm
+    pauseTreemapChartUpdate();
+  };
+
+  function updateTreemapChart () {
+    var root = d3.select("sketch")[0][0];
+    treemapChart = stage.children[0];
+    if (treemapChart && treemapChart._animate) {
+      treemapChart.update(root);
+    }
+  }
+
+  function pauseTreemapChartUpdate () {
+    treemapChart = stage.children[0];
+    if (treemapChart) {
+      treemapChart.toggleAnimate();
+    }
+  };
+
+  // run the render loop
+  requestAnimFrame(animate);
+
+  renderer.render(stage);
+
+  function animate() {
+    updateTreemapChart();
+    renderer.render(stage);
+    requestAnimFrame(animate);
+  }
+  </script>
+</body>
+</html>

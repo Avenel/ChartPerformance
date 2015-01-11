@@ -1726,6 +1726,8 @@ ChartLib.Basic2AxisChart = function (element) {
 		this._max_width = (parseFloat(element.getAttribute("max_width")) * this._scale) - 3*this._pxs;
 		this._max_height = (parseFloat(element.getAttribute("max_height")) * this._scale) - 2*this._pxs;
 
+		console.log("2axisChart: ", this._max_width, this._max_height);
+
 		// calc axis
 		this._domain_x_min = parseFloat(element.getAttribute("domain_x_min"));
 		this._domain_x_max = parseFloat(element.getAttribute("domain_x_max"));
@@ -1744,7 +1746,7 @@ ChartLib.Basic2AxisChart = function (element) {
 			.range( this._range_y);
 
 		// axis ticks
-		var _arguments = [5];
+		var _arguments = [10];
 		this.tickFormat_x = this._axisScale_x.tickFormat.apply(this.scale, _arguments);
 		this.ticks_x = this._axisScale_x.ticks.apply(this._axisScale_x, _arguments);
 
@@ -2306,32 +2308,25 @@ ChartLib.HeatmapNode.prototype.constructor = ChartLib.HeatmapNode;
 * Heatmap, using treemap nodes
 */
 ChartLib.Heatmap = function(element) {
-	ChartLib.BasicChart.apply(this);
+	ChartLib.Basic2AxisChart.apply(this);
 	this.type = "heatmap";
 
 	this.init = function(element) {
 		// call super init
-		this.initDefault(element);
+		this.init2AxisChart(element);
 
 		if (!this.nodeContainer) {
 			this.nodeContainer = new PIXI.DisplayObjectContainer();
 			this.addChild(this.nodeContainer);
 
 			// calc grid size
-			this._max_width = parseFloat(element.getAttribute("max_width")) * this._scale;
-			this._max_height = parseFloat(element.getAttribute("max_height")) * this._scale;
-
 			var cellCount = element.children.length;
-			var cellSize = (this._max_width*this._max_height) / cellCount;
-			var cellRatio = parseFloat(element.getAttribute("cell_ratio"));
-
-			// atm ignoring cellRatio
-			var cellWidth = Math.sqrt(cellSize);
-			var cellHeight = Math.sqrt(cellSize);
+			var cellWidth = parseFloat(element.getAttribute("cell_width")) * this._scale;
+			var cellHeight = parseFloat(element.getAttribute("cell_height")) * this._scale;
 
 			for (var node = element.firstChild; node; node = node.nextSibling) {
-				var x = parseFloat(node.getAttribute("x")) * cellWidth;
-				var y = parseFloat(node.getAttribute("y")) * cellHeight;
+				var x = parseFloat(node.getAttribute("x")) * this._scale + 4.05*this._pxs;
+				var y = parseFloat(node.getAttribute("y")) * this._scale + this._pxs;
 				var width = cellWidth;
 				var height = cellHeight;
 				var color = parseInt(node.getAttribute("fill").replace("#", "0x"));
@@ -2356,5 +2351,5 @@ ChartLib.Heatmap = function(element) {
 }
 
 // Set prototype object to the accordinate Pixi.js Graphics object
-ChartLib.Heatmap.prototype = Object.create( ChartLib.BasicChart.prototype );
+ChartLib.Heatmap.prototype = Object.create( ChartLib.Basic2AxisChart.prototype );
 ChartLib.Heatmap.prototype.constructor = ChartLib.Heatmap;

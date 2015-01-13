@@ -12,6 +12,9 @@
   <script src="d3.v3.min.js"></script>
   <script src="pixi.dev.js"></script>
   <script src="chartLib.js"></script>
+  <script src="jquery-2.1.3.min.js"></script>
+  <script src="elasticsearch.min.js"></script>
+  <script src="elasticsearch.jquery.min.js"></script>
   <!-- <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script> -->
 
 </head>
@@ -22,6 +25,28 @@
   var data = [
     250, 20, 10, 123, 19
   ];
+
+  // Make request
+  var client = new $.es.Client({
+    hosts: 'localhost:9200'
+  });
+
+  client.search({
+    body: {
+      query: {
+        match_all: {}
+      },
+      _source: ["email", "balance"]
+    }
+
+  }).then(function (resp) {
+    var hits = resp.hits.hits;
+    data = hits.map(function(data){ return {value: data._source.balance, name: data._source.email}; })
+    console.log(data);
+    buildChart(data);
+  }, function (err) {
+    console.trace(err.message);
+  });
 
   // create an new instance of a pixi stage
   var stage = new PIXI.Stage(0xFFFFFF, true);
@@ -38,8 +63,6 @@
   padding = Math.floor(1*pxs),
   transitionDuration = 1000;
 
-  var domainSum = d3.sum(data);
-
   var canvas = document.getElementById('chart');
   var options = new function() {
     this.transparent = false;
@@ -55,30 +78,38 @@
   .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
 
 
-  // Add our "custom" sketch element to the body.
-  var sketch = d3.select("body").append("cxustom:sketch")
-  .attr("width", w)
-  .attr("height", h)
-  .attr("scale", scale)
-  .attr("pxs", pxs)
-  .attr("x", 0)
-  .attr("y", 0)
-  .attr("title", "ExamplePieChart")
-  .attr("domain_sum", domainSum)
-  .attr("max_width", w - (2*padding))
-  .attr("max_height", h - (2*padding))
+  function buildChart(data) {
+    var domainSum = d3.sum(data.map(function (data){ return data.value}));
 
-  // append bar objects to sketch
-  var segment = sketch.selectAll("segment").data(data);
-  segment.enter()
-    .append('segment')
-    .attr({
-      val: function (d, i) {
-        var angle = (d/domainSum) *  2 * Math.PI;
-        return angle;
-      }
-    })
-    .call(addPie);
+    // Add our "custom" sketch element to the body.
+    var sketch = d3.select("body").append("cxustom:sketch")
+    .attr("width", w)
+    .attr("height", h)
+    .attr("scale", scale)
+    .attr("pxs", pxs)
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("title", "ExamplePieChart")
+    .attr("domain_sum", domainSum)
+    .attr("max_width", w - (2*padding))
+    .attr("max_height", h - (2*padding))
+
+    // append bar objects to sketch
+    var segment = sketch.selectAll("segment").data(data);
+
+    segment.enter()
+      .append('segment')
+      .attr({
+        val: function (d, i) {
+          var angle = (d.value/domainSum) *  2 * Math.PI;
+          return angle;
+        },
+        name: function (d, i) {
+          return d.name;
+        }
+      })
+      .call(addPie);
+  }
 
   var pieChart = null;
 

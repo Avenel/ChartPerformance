@@ -2094,14 +2094,15 @@ ChartLib.PieChart = function(element) {
 
 			var i=0;
 			var startAngle = 0;
-			var color = 0xFF3333;
 
+			var color = d3.scale.category20c();
 			for (var segment = element.firstChild; segment; segment = segment.nextSibling) {
 				var angle = parseFloat(segment.getAttribute("val"));
-				color = color + i*0x003333;
+
+				segmentColor = parseInt(color(segment.getAttribute("name")).replace("#", "0x"));
 
 				var newSegment = new ChartLib.PieSegment(angle, startAngle, this.radius,
-											this._center_x, this._center_y, color, this._pxs, 0.75);
+											this._center_x, this._center_y, segmentColor, this._pxs, 0.75);
 
 				this.segmentContainer.addChild(newSegment);
 				startAngle += angle;

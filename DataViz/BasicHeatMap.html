@@ -87,10 +87,10 @@
               range: {
                 field: "age",
                 ranges: [
-              {from: 18, to: 23},
-            {from: 24, to: 29},
-          {from: 30, to: 35},
-        {from: 36, to: 39},
+                  {from: 18, to: 23},
+                  {from: 24, to: 29},
+                  {from: 30, to: 35},
+                  {from: 36, to: 39},
                   {from: 40},
                 ]
               },
@@ -110,7 +110,8 @@
     data = states.map(function(state, i){
         curr_state = i;
         return state.balance_ranges.buckets.map(function(range, j) {
-          return {value: range.doc_count, x: j, y: i};
+          console.log(range);
+          return {value: range.balance_avg.value, x: j, y: i};
         })
       });
     data_flatten = [];
@@ -153,7 +154,7 @@
 
     data_length = data.length;
     var colorScale = d3.scale.quantile()
-    .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
+    .domain([0, d3.max(data, function (d) { return d.value; })])
     .range(colors);
 
     var heatMap = sketch.selectAll("node")

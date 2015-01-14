@@ -12,13 +12,15 @@
   <script src="d3.v3.min.js"></script>
   <script src="pixi.dev.js"></script>
   <script src="chartLib.js"></script>
+  <script src="jquery-2.1.3.min.js"></script>
+  <script src="elasticsearch.min.js"></script>
+  <script src="elasticsearch.jquery.min.js"></script>
   <!-- <script src="http://10.10.51.243:8080/target/target-script-min.js#anonymous"></script> -->
 
 </head>
 <body>
   <canvas id="chart"></canvas>
   <script>
-  // data - here: using an external json file.
 
   // create an new instance of a pixi stage
   var stage = new PIXI.Stage(0xFFFFFF, true);
@@ -50,58 +52,105 @@
   .attr("renderer", (renderer instanceof PIXI.CanvasRenderer)? "canvas" : "webgl");
 
   var max_width = w - (2*padding),
-      max_height = h - (2*padding);
-
-  // colors
-  var colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"];
-  var days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-  var times = ["1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12a", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12p"];
-  var buckets = 9;
+  max_height = h - (2*padding);
 
   // some necessary metadata
   var data_length = 0; // will be calculated afterwards
-  var data_length_x = 24; // 24 hours
-  var data_length_y = 7; // 7 days
+  var data_length_x = 5; // 24 hours
+  var data_length_y = 35; // 7 days
 
   // calculate width and height of heatmap cells
   var xPos = d3.scale.ordinal()
-    .domain( d3.range( data_length_x ) )
-    .rangeRoundBands( [0, max_width-3*pxs], 0);
+  .domain( d3.range( data_length_x ) )
+  .rangeRoundBands( [0, max_width-3*pxs], 0);
 
   var yPos = d3.scale.ordinal()
-    .domain( d3.range( data_length_y ) )
-    .rangeRoundBands( [0, max_height-pxs], 0);
+  .domain( d3.range( data_length_y ) )
+  .rangeRoundBands( [0, max_height-pxs], 0);
 
-  console.log("xyPos: ", (max_width - 3.05*pxs)*scale, (max_height - 1.3*pxs)*scale);
+  // Make request
+  var client = new $.es.Client({
+    hosts: 'localhost:9200'
+  });
 
-  // Add our "custom" sketch element to the body.
-  var sketch = d3.select("body").append("cxustom:sketch")
-  .attr("width", w)
-  .attr("height", h)
-  .attr("scale", scale)
-  .attr("pxs", pxs)
-  .attr("x", padding)
-  .attr("y", h-padding)
-  .attr("title", "ExampleHeatmap")
-  .attr("max_width", max_width)
-  .attr("max_height", max_height)
-  .attr("cell_width", xPos.rangeBand())
-  .attr("cell_height", yPos.rangeBand())
-  .attr("domain_x_min", 1)
-  .attr("domain_x_max", data_length_x)
-  .attr("domain_y_min", 1)
-  .attr("domain_y_max", data_length_y)
+  client.search({
+    body: {
+      query: { match_all: {} },
+      aggs: {
+        group_by_state: {
+          terms: {
+            field: "state",
+            size: data_length_y
+          },
+          aggs: {
+            balance_ranges: {
+              range: {
+                field: "age",
+                ranges: [
+              {from: 18, to: 23},
+            {from: 24, to: 29},
+          {from: 30, to: 35},
+        {from: 36, to: 39},
+                  {from: 40},
+                ]
+              },
+              aggs: {
+                balance_avg: {
+                  avg : { field : "balance" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }).then(function (resp) {
+    var states = resp.aggregations.group_by_state.buckets;
+    var curr_state = "";
+    data = states.map(function(state, i){
+        curr_state = i;
+        return state.balance_ranges.buckets.map(function(range, j) {
+          return {value: range.doc_count, x: j, y: i};
+        })
+      });
+    data_flatten = [];
+    data_flatten = data_flatten.concat.apply(data_flatten, data);
+    buildChart(data_flatten);
+  }, function (err) {
+    console.trace(err.message);
+  });
+
+
+
+  // colors
+  var colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"];
+  var buckets = 9; // color count
+
+  function buildChart(data) {
+
+    var days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+    var times = ["1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12a", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12p"];
+
+    // Add our "custom" sketch element to the body.
+    var sketch = d3.select("body").append("cxustom:sketch")
+    .attr("width", w)
+    .attr("height", h)
+    .attr("scale", scale)
+    .attr("pxs", pxs)
+    .attr("x", padding)
+    .attr("y", h-padding)
+    .attr("title", "ExampleHeatmap")
+    .attr("max_width", max_width)
+    .attr("max_height", max_height)
+    .attr("cell_width", xPos.rangeBand())
+    .attr("cell_height", yPos.rangeBand())
+    .attr("domain_x_min", 1)
+    .attr("domain_x_max", data_length_x)
+    .attr("domain_y_min", 1)
+    .attr("domain_y_max", data_length_y)
 
   // Create heatmap element, based on a tsv file
-  d3.tsv("heatmapData.tsv",
-  function(d) {
-    return {
-      day: +d.day,
-      hour: +d.hour,
-      value: +d.value
-    };
-  },
-  function(error, data) {
+
     data_length = data.length;
     var colorScale = d3.scale.quantile()
     .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
@@ -110,15 +159,15 @@
     var heatMap = sketch.selectAll("node")
       .data(data)
       .enter().append("node")
-      .attr("x", function(d) { return (d.hour - 1)*xPos.rangeBand();})
-      .attr("y", function(d) { return (d.day - 1)*yPos.rangeBand(); })
+      .attr("x", function(d) { return (d.x)*xPos.rangeBand();})
+      .attr("y", function(d) { return (d.y)*yPos.rangeBand(); })
       .attr("fill", function(d) { return colors[0]; })
       .call(addTreemap);
 
     heatMap.transition().duration(1000)
       .attr("fill", function(d) { return colorScale(d.value); })
       .each("end", pauseTreemapChartUpdate);
-  });
+  };
 
   var treemapChart = null;
 

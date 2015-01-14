@@ -33,16 +33,27 @@
 
   client.search({
     body: {
-      query: {
-        match_all: {}
-      },
-      _source: ["email", "balance"]
+      query: { match_all: {} },
+      aggs: {
+        balance_ranges: {
+          range: {
+            field: "balance",
+            ranges: [
+              {from: 0, to: 10000},
+              {from: 10001, to: 20000},
+              {from: 20001, to: 30000},
+              {from: 30001, to: 40000},
+              {from: 40001, to: 45000},
+              {from: 45001}
+            ]
+          }
+        }
+      }
     }
-
   }).then(function (resp) {
     var hits = resp.hits.hits;
-    data = hits.map(function(data){ return {value: data._source.balance, name: data._source.email}; })
-    console.log(data);
+    data = resp.aggregations.balance_ranges.buckets;
+    data = data.map(function(data){ return {value: data.doc_count, name: data.key}; });
     buildChart(data);
   }, function (err) {
     console.trace(err.message);
